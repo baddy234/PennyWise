@@ -1,0 +1,6 @@
+{
+  "name": "PennyWise",
+  "description": "PennyWise by RIEL SITES: Glassmorphic budget and expense tracker with customizable daily, weekly, monthly, and yearly limits, funds, spending insights, visual charts, and local backup capabilities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
