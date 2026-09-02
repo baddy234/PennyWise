@@ -33,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -102,11 +103,13 @@ fun AddEditTransactionModal(
     val paymentMethods = listOf("Card", "Cash", "Bank Transfer", "Crypto", "Other")
     val selectedFund = funds.find { it.id == selectedFundId }
 
+    val isDark = isAppInDarkTheme()
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
-        scrimColor = Color.Black.copy(alpha = 0.7f),
+        containerColor = MaterialTheme.colorScheme.surface,
+        scrimColor = Color.Black.copy(alpha = 0.5f),
         dragHandle = {
             Box(
                 modifier = Modifier
@@ -114,7 +117,7 @@ fun AddEditTransactionModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isDark) Slate700 else Slate300)
             )
         }
     ) {
@@ -134,7 +137,7 @@ fun AddEditTransactionModal(
             ) {
                 Text(
                     text = if (transactionToEdit == null) "New Transaction" else "Edit Transaction",
-                    color = Slate50,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.4).sp
@@ -165,8 +168,8 @@ fun AddEditTransactionModal(
                     .fillMaxWidth()
                     .height(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Slate900)
-                    .border(1.dp, Slate800, RoundedCornerShape(12.dp))
+                    .background(if (isDark) Slate900 else Slate100)
+                    .border(1.dp, if (isDark) Slate800 else Slate300, RoundedCornerShape(12.dp))
                     .padding(3.dp)
             ) {
                 listOf("EXPENSE" to "Expense", "INCOME" to "Income").forEach { (typeKey, label) ->
@@ -191,7 +194,7 @@ fun AddEditTransactionModal(
                     ) {
                         Text(
                             text = label,
-                            color = if (isSelected) Color.White else Slate400,
+                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
@@ -218,16 +221,11 @@ fun AddEditTransactionModal(
                         modifier = Modifier.padding(start = 12.dp)
                     )
                 },
-                placeholder = { Text("0.00", color = Slate600, fontSize = 20.sp) },
+                placeholder = { Text("0.00", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), fontSize = 20.sp) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = if (transactionType == "EXPENSE") AccentRose else AccentEmerald,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
+                colors = appTextFieldColors(
+                    focusedBorderColor = if (transactionType == "EXPENSE") AccentRose else AccentEmerald
                 ),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
@@ -241,17 +239,10 @@ fun AddEditTransactionModal(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = { Text("Title / Merchant", color = Slate400) },
-                placeholder = { Text("e.g., Grocery Mart, Coffee, Rent", color = Slate600) },
+                label = { Text("Title / Merchant", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                placeholder = { Text("e.g., Grocery Mart, Coffee, Rent", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -263,7 +254,7 @@ fun AddEditTransactionModal(
             // Category Dropdown Selector
             Text(
                 text = "Category",
-                color = Slate300,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 6.dp)

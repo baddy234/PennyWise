@@ -5,22 +5,25 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.data.local.dao.BudgetLimitDao
+import com.example.data.local.dao.ExpenseTemplateDao
 import com.example.data.local.dao.FundDao
 import com.example.data.local.dao.TransactionDao
 import com.example.data.local.entity.BudgetLimitEntity
+import com.example.data.local.entity.ExpenseTemplateEntity
 import com.example.data.local.entity.FundEntity
 import com.example.data.local.entity.TransactionEntity
 import kotlinx.coroutines.CoroutineScope
 
 @Database(
-    entities = [TransactionEntity::class, BudgetLimitEntity::class, FundEntity::class],
-    version = 4,
+    entities = [TransactionEntity::class, BudgetLimitEntity::class, FundEntity::class, ExpenseTemplateEntity::class],
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun budgetLimitDao(): BudgetLimitDao
     abstract fun fundDao(): FundDao
+    abstract fun expenseTemplateDao(): ExpenseTemplateDao
 
     companion object {
         @Volatile

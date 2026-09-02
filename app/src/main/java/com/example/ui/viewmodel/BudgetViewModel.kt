@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
 import com.example.data.local.entity.BudgetLimitEntity
+import com.example.data.local.entity.ExpenseTemplateEntity
 import com.example.data.local.entity.FundEntity
 import com.example.data.local.entity.TransactionEntity
 import com.example.data.model.CategoryRegistry
@@ -14,11 +15,13 @@ import com.example.notification.NotificationHelper
 import com.example.ui.components.BarChartItem
 import com.example.ui.components.CategorySpendItem
 import com.example.util.BackupExportHelper
+import com.example.ui.theme.AppThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -60,11 +63,33 @@ data class PeriodSummary(
     val remainingAmount: Double get() = (limitAmount - totalExpense).coerceAtLeast(0.0)
 }
 
+enum class ForecastHealth {
+    ON_TRACK,
+    CAUTION,
+    OVER_BUDGET
+}
+
+data class BudgetForecast(
+    val currentSpend: Double = 0.0,
+    val currentIncome: Double = 0.0,
+    val totalBudgetLimit: Double = 0.0,
+    val daysElapsedInMonth: Int = 1,
+    val daysInMonth: Int = 30,
+    val daysRemaining: Int = 29,
+    val averageDailySpend: Double = 0.0,
+    val projectedTotalExpense: Double = 0.0,
+    val projectedRemainingBalance: Double = 0.0,
+    val recommendedDailyAllowance: Double = 0.0,
+    val healthStatus: ForecastHealth = ForecastHealth.ON_TRACK
+)
+
 class BudgetViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val prefs = application.getSharedPreferences("app_settings_prefs", Context.MODE_PRIVATE)
 
     private val db = AppDatabase.getDatabase(application, viewModelScope)
     private val notificationHelper = NotificationHelper(application)
-    private val repository = BudgetRepository(db.transactionDao(), db.budgetLimitDao(), db.fundDao(), notificationHelper)
+    private val repository = BudgetRepository(db.transactionDao(), db.budgetLimitDao(), db.fundDao(), db.expenseTemplateDao(), notificationHelper)
 
     val transactions: StateFlow<List<TransactionEntity>> = repository.allTransactions
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -75,8 +100,98 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     val funds: StateFlow<List<FundEntity>> = repository.allFunds
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val expenseTemplates: StateFlow<List<ExpenseTemplateEntity>> = repository.allTemplates
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    init {
+        // Seed initial default expense templates if empty
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1000)
+            if (expenseTemplates.value.isEmpty()) {
+                seedInitialTemplates()
+            }
+        }
+    }
+
+    private suspend fun seedInitialTemplates() {
+        val defaultTemplates = listOf(
+            ExpenseTemplateEntity(
+                title = "Weekly Groceries",
+                category = "Food & Dining",
+                amount = 120.00,
+                paymentMethod = "Credit Card",
+                note = "Supermarket & pantry restock",
+                frequency = "WEEKLY",
+                isPlanned = true,
+                iconName = "ShoppingBag",
+                colorHex = "#10B981"
+            ),
+            ExpenseTemplateEntity(
+                title = "Monthly Utility Bill",
+                category = "Utilities",
+                amount = 85.00,
+                paymentMethod = "Bank Transfer",
+                note = "Electric & Water",
+                frequency = "MONTHLY",
+                isPlanned = true,
+                iconName = "Receipt",
+                colorHex = "#3B82F6"
+            ),
+            ExpenseTemplateEntity(
+                title = "Gas & Commute",
+                category = "Transportation",
+                amount = 45.00,
+                paymentMethod = "Credit Card",
+                note = "Vehicle fuel top-up",
+                frequency = "WEEKLY",
+                isPlanned = true,
+                iconName = "LocalGasStation",
+                colorHex = "#F59E0B"
+            ),
+            ExpenseTemplateEntity(
+                title = "Coffee & Snacks",
+                category = "Food & Dining",
+                amount = 15.00,
+                paymentMethod = "Apple Pay / Wallet",
+                note = "Daily espresso & pastries",
+                frequency = "DAILY",
+                isPlanned = false,
+                iconName = "Fastfood",
+                colorHex = "#EC4899"
+            ),
+            ExpenseTemplateEntity(
+                title = "Gym Membership",
+                category = "Health & Fitness",
+                amount = 35.00,
+                paymentMethod = "Debit Card",
+                note = "Fitness center recurring access",
+                frequency = "MONTHLY",
+                isPlanned = true,
+                iconName = "FitnessCenter",
+                colorHex = "#8B5CF6"
+            )
+        )
+        defaultTemplates.forEach { repository.insertTemplate(it) }
+    }
+
+    val budgetForecast: StateFlow<BudgetForecast> = combine(
+        transactions,
+        budgetLimits
+    ) { txs, limits ->
+        calculateBudgetForecast(txs, limits)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), BudgetForecast())
+
     private val _selectedTimeframe = MutableStateFlow(TimeframeFilter.MONTHLY)
     val selectedTimeframe: StateFlow<TimeframeFilter> = _selectedTimeframe.asStateFlow()
+
+    private val _themeMode = MutableStateFlow(
+        try {
+            AppThemeMode.valueOf(prefs.getString("pref_theme_mode", AppThemeMode.SYSTEM.name) ?: AppThemeMode.SYSTEM.name)
+        } catch (e: Exception) {
+            AppThemeMode.SYSTEM
+        }
+    )
+    val themeMode: StateFlow<AppThemeMode> = _themeMode.asStateFlow()
 
     private val _currencySymbol = MutableStateFlow("$")
     val currencySymbol: StateFlow<String> = _currencySymbol.asStateFlow()
@@ -96,6 +211,12 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _statusMessage = MutableStateFlow<String?>(null)
     val statusMessage: StateFlow<String?> = _statusMessage.asStateFlow()
+
+    fun setThemeMode(mode: AppThemeMode) {
+        _themeMode.value = mode
+        prefs.edit().putString("pref_theme_mode", mode.name).apply()
+        _statusMessage.value = "Theme updated to ${mode.displayName}"
+    }
 
     fun setTimeframe(timeframe: TimeframeFilter) {
         _selectedTimeframe.value = timeframe
@@ -255,6 +376,73 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    // Expense Template Actions
+    fun createExpenseTemplate(
+        title: String,
+        category: String,
+        amount: Double,
+        paymentMethod: String,
+        note: String,
+        frequency: String,
+        isPlanned: Boolean,
+        iconName: String,
+        colorHex: String
+    ) {
+        viewModelScope.launch {
+            val template = ExpenseTemplateEntity(
+                title = title,
+                category = category,
+                amount = amount,
+                paymentMethod = paymentMethod,
+                note = note,
+                frequency = frequency,
+                isPlanned = isPlanned,
+                iconName = iconName,
+                colorHex = colorHex
+            )
+            repository.insertTemplate(template)
+            _statusMessage.value = "Expense template '$title' saved!"
+        }
+    }
+
+    fun updateExpenseTemplate(template: ExpenseTemplateEntity) {
+        viewModelScope.launch {
+            repository.updateTemplate(template)
+            _statusMessage.value = "Expense template '${template.title}' updated"
+        }
+    }
+
+    fun deleteExpenseTemplate(template: ExpenseTemplateEntity) {
+        viewModelScope.launch {
+            repository.deleteTemplate(template)
+            _statusMessage.value = "Expense template removed"
+        }
+    }
+
+    fun toggleExpenseTemplatePlanned(template: ExpenseTemplateEntity) {
+        viewModelScope.launch {
+            val updated = template.copy(isPlanned = !template.isPlanned)
+            repository.updateTemplate(updated)
+            _statusMessage.value = if (updated.isPlanned) "'${template.title}' added to month plan" else "'${template.title}' unflagged from plan"
+        }
+    }
+
+    fun logTransactionFromTemplate(template: ExpenseTemplateEntity) {
+        viewModelScope.launch {
+            val tx = TransactionEntity(
+                title = template.title,
+                amount = template.amount,
+                category = template.category,
+                type = "EXPENSE",
+                dateMillis = System.currentTimeMillis(),
+                note = if (template.note.isNotBlank()) "Recorded via template: ${template.note}" else "Recorded via template",
+                paymentMethod = template.paymentMethod
+            )
+            repository.insertTransaction(tx)
+            _statusMessage.value = "⚡ Recorded ${template.title} (${_currencySymbol.value}${String.format(Locale.US, "%.2f", template.amount)})"
+        }
+    }
+
     fun addMoneyToFund(
         fund: FundEntity,
         amount: Double,
@@ -307,6 +495,25 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             )
             repository.insertOrUpdateLimit(entity)
             _statusMessage.value = "Budget limit saved"
+        }
+    }
+
+    fun applyPlannedBudgetAllocations(allocations: Map<String, Double>) {
+        viewModelScope.launch {
+            val currentLimits = repository.allLimits.first()
+            allocations.forEach { (categoryName, amount) ->
+                val existing = currentLimits.find { it.periodType == "CATEGORY" && it.categoryName == categoryName }
+                val entity = BudgetLimitEntity(
+                    id = existing?.id ?: 0,
+                    periodType = "CATEGORY",
+                    categoryName = categoryName,
+                    limitAmount = amount,
+                    isEnabled = true,
+                    notifyThresholdPercent = 80
+                )
+                repository.insertOrUpdateLimit(entity)
+            }
+            _statusMessage.value = "Smart auto-budget limits applied!"
         }
     }
 
@@ -682,5 +889,69 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             TimeframeFilter.YEARLY -> cal.set(Calendar.DAY_OF_YEAR, 1)
         }
         return cal.timeInMillis
+    }
+
+    private fun calculateBudgetForecast(txs: List<TransactionEntity>, limits: List<BudgetLimitEntity>): BudgetForecast {
+        val cal = Calendar.getInstance()
+        val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
+        val dayOfMonth = cal.get(Calendar.DAY_OF_MONTH)
+        val daysElapsed = dayOfMonth.coerceAtLeast(1)
+        val daysRemaining = (daysInMonth - daysElapsed).coerceAtLeast(0)
+
+        val monthStartCal = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val monthStartMillis = monthStartCal.timeInMillis
+
+        val monthEndCal = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_MONTH, daysInMonth)
+            set(Calendar.HOUR_OF_DAY, 23)
+            set(Calendar.MINUTE, 59)
+            set(Calendar.SECOND, 59)
+            set(Calendar.MILLISECOND, 999)
+        }
+        val monthEndMillis = monthEndCal.timeInMillis
+
+        val currentMonthTxs = txs.filter { it.dateMillis in monthStartMillis..monthEndMillis }
+        val currentSpend = currentMonthTxs.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+        val currentIncome = currentMonthTxs.filter { it.type == "INCOME" }.sumOf { it.amount }
+
+        val monthlyLimits = limits.filter { it.periodType == "MONTHLY" || it.periodType.isEmpty() }
+        val totalLimit = if (monthlyLimits.isNotEmpty()) monthlyLimits.sumOf { it.limitAmount } else 0.0
+
+        val averageDailySpend = currentSpend / daysElapsed
+        val projectedRemainingSpend = averageDailySpend * daysRemaining
+        val projectedTotalExpense = currentSpend + projectedRemainingSpend
+
+        val benchmarkLimit = if (totalLimit > 0) totalLimit else currentIncome
+        val projectedRemainingBalance = if (benchmarkLimit > 0) (benchmarkLimit - projectedTotalExpense) else (currentIncome - projectedTotalExpense)
+
+        val recommendedDailyAllowance = if (benchmarkLimit > currentSpend && daysRemaining > 0) {
+            (benchmarkLimit - currentSpend) / daysRemaining
+        } else 0.0
+
+        val healthStatus = when {
+            benchmarkLimit > 0 && projectedTotalExpense > benchmarkLimit -> ForecastHealth.OVER_BUDGET
+            benchmarkLimit > 0 && projectedTotalExpense > (benchmarkLimit * 0.85) -> ForecastHealth.CAUTION
+            else -> ForecastHealth.ON_TRACK
+        }
+
+        return BudgetForecast(
+            currentSpend = currentSpend,
+            currentIncome = currentIncome,
+            totalBudgetLimit = totalLimit,
+            daysElapsedInMonth = daysElapsed,
+            daysInMonth = daysInMonth,
+            daysRemaining = daysRemaining,
+            averageDailySpend = averageDailySpend,
+            projectedTotalExpense = projectedTotalExpense,
+            projectedRemainingBalance = projectedRemainingBalance,
+            recommendedDailyAllowance = recommendedDailyAllowance,
+            healthStatus = healthStatus
+        )
     }
 }

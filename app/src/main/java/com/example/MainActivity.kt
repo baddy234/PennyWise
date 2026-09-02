@@ -92,6 +92,11 @@ import kotlinx.coroutines.launch
 
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.outlined.Calculate
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.outlined.ReceiptLong
+import com.example.data.local.entity.ExpenseTemplateEntity
+import com.example.ui.modals.CreateEditTemplateModal
+import com.example.ui.screens.ExpensesScreen
 import com.example.ui.screens.ToolsScreen
 
 enum class AppNavigationTab(
@@ -101,6 +106,7 @@ enum class AppNavigationTab(
     val testTag: String
 ) {
     DASHBOARD("Tracker", Icons.Filled.AccountBalanceWallet, Icons.Outlined.AccountBalanceWallet, "nav_dashboard"),
+    EXPENSES("Expenses", Icons.Filled.ReceiptLong, Icons.Outlined.ReceiptLong, "nav_expenses"),
     FUNDS("Funds", Icons.Filled.Savings, Icons.Outlined.Savings, "nav_funds"),
     TOOLS("Tools", Icons.Filled.Calculate, Icons.Outlined.Calculate, "nav_tools"),
     REPORTS("Reports", Icons.Filled.Insights, Icons.Outlined.Insights, "nav_reports"),
@@ -113,8 +119,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
-                BudgetApp()
+            val viewModel: BudgetViewModel = viewModel()
+            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+            MyApplicationTheme(themeMode = themeMode) {
+                BudgetApp(viewModel = viewModel)
             }
         }
     }
@@ -149,7 +157,10 @@ fun BudgetApp(
     val transactions by viewModel.transactions.collectAsStateWithLifecycle()
     val limits by viewModel.budgetLimits.collectAsStateWithLifecycle()
     val funds by viewModel.funds.collectAsStateWithLifecycle()
+    val expenseTemplates by viewModel.expenseTemplates.collectAsStateWithLifecycle()
+    val budgetForecast by viewModel.budgetForecast.collectAsStateWithLifecycle()
     val selectedTimeframe by viewModel.selectedTimeframe.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val currencySymbol by viewModel.currencySymbol.collectAsStateWithLifecycle()
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
     val isPinLockEnabled by viewModel.isPinLockEnabled.collectAsStateWithLifecycle()
@@ -171,6 +182,9 @@ fun BudgetApp(
     // Modals State
     var showAddTransactionModal by remember { mutableStateOf(false) }
     var selectedTransactionToEdit by remember { mutableStateOf<TransactionEntity?>(null) }
+
+    var showCreateEditTemplateModal by remember { mutableStateOf(false) }
+    var selectedTemplateToEdit by remember { mutableStateOf<ExpenseTemplateEntity?>(null) }
 
     var showSetBudgetModal by remember { mutableStateOf(false) }
     var selectedLimitToEdit by remember { mutableStateOf<BudgetLimitEntity?>(null) }
@@ -212,16 +226,18 @@ fun BudgetApp(
                 snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                 bottomBar = {
                 // Glassmorphic Navigation Bar
+                val isDark = isAppInDarkTheme()
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.navigationBars)
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .clip(RoundedCornerShape(22.dp))
-                        .background(Slate950Alpha())
+                        .background(if (isDark) Slate950Alpha() else Color.White.copy(alpha = 0.92f))
                         .border(
                             1.dp,
-                            Brush.linearGradient(listOf(Color(0x35FFFFFF), Color(0x10FFFFFF), Color(0x25818CF8))),
+                            if (isDark) Brush.linearGradient(listOf(Color(0x35FFFFFF), Color(0x10FFFFFF), Color(0x25818CF8)))
+                            else Brush.linearGradient(listOf(Color(0x35000000), Color(0x15000000))),
                             RoundedCornerShape(22.dp)
                         )
                 ) {
@@ -259,8 +275,8 @@ fun BudgetApp(
                                 colors = NavigationBarItemDefaults.colors(
                                     selectedIconColor = AccentCyan,
                                     selectedTextColor = AccentCyan,
-                                    unselectedIconColor = Slate500,
-                                    unselectedTextColor = Slate500,
+                                    unselectedIconColor = if (isDark) Slate500 else Slate600,
+                                    unselectedTextColor = if (isDark) Slate500 else Slate600,
                                     indicatorColor = AccentCyan.copy(alpha = 0.15f)
                                 ),
                                 modifier = Modifier.testTag(tab.testTag)
@@ -294,8 +310,8 @@ fun BudgetApp(
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = AccentCyan,
                                 selectedTextColor = AccentCyan,
-                                unselectedIconColor = Slate500,
-                                unselectedTextColor = Slate500,
+                                unselectedIconColor = if (isDark) Slate500 else Slate600,
+                                unselectedTextColor = if (isDark) Slate500 else Slate600,
                                 indicatorColor = AccentCyan.copy(alpha = 0.15f)
                             ),
                             modifier = Modifier.testTag("nav_more")
@@ -318,6 +334,7 @@ fun BudgetApp(
                             funds = funds,
                             selectedTimeframe = selectedTimeframe,
                             periodSummary = periodSummary,
+                            budgetForecast = budgetForecast,
                             currencySymbol = currencySymbol,
                             onTimeframeChange = { viewModel.setTimeframe(it) },
                             onAddTransactionClick = {
@@ -334,6 +351,31 @@ fun BudgetApp(
                             onGoalsClick = { currentTab = AppNavigationTab.FUNDS },
                             onPostPaymentNow = { recurringTx ->
                                 viewModel.postRecurringPayment(recurringTx)
+                            }
+                        )
+                    }
+                    AppNavigationTab.EXPENSES -> {
+                        ExpensesScreen(
+                            templates = expenseTemplates,
+                            transactions = transactions,
+                            currencySymbol = currencySymbol,
+                            onCreateTemplateClick = {
+                                selectedTemplateToEdit = null
+                                showCreateEditTemplateModal = true
+                            },
+                            onEditTemplateClick = { template ->
+                                selectedTemplateToEdit = template
+                                showCreateEditTemplateModal = true
+                            },
+                            onQuickLogTemplate = { template ->
+                                viewModel.logTransactionFromTemplate(template)
+                            },
+                            onTogglePlanned = { template ->
+                                viewModel.toggleExpenseTemplatePlanned(template)
+                            },
+                            onTransactionClick = { tx ->
+                                selectedTransactionToEdit = tx
+                                showAddTransactionModal = true
                             }
                         )
                     }
@@ -384,6 +426,7 @@ fun BudgetApp(
                             limits = limits,
                             transactions = transactions,
                             currencySymbol = currencySymbol,
+                            totalFundBalance = funds.sumOf { it.balance },
                             onAddLimitClick = {
                                 selectedLimitToEdit = null
                                 showSetBudgetModal = true
@@ -394,6 +437,9 @@ fun BudgetApp(
                             },
                             onToggleLimit = { limit ->
                                 viewModel.toggleBudgetLimit(limit)
+                            },
+                            onApplyAutoBudget = { allocations ->
+                                viewModel.applyPlannedBudgetAllocations(allocations)
                             }
                         )
                     }
@@ -405,6 +451,8 @@ fun BudgetApp(
                             currentPin = userPin,
                             transactionCount = transactions.size,
                             limitCount = limits.size,
+                            themeMode = themeMode,
+                            onThemeModeChange = { viewModel.setThemeMode(it) },
                             onCurrencyChange = { viewModel.setCurrency(it) },
                             onNotificationToggle = { viewModel.toggleNotifications(it) },
                             onSavePinSettings = { enabled, newPin -> viewModel.setPinSettings(enabled, newPin) },
@@ -566,6 +614,49 @@ fun BudgetApp(
             },
             onShare = { csvContent, filename ->
                 viewModel.shareCsv(context, csvContent, filename)
+            }
+        )
+    }
+
+    // Create / Edit Expense Template Modal BottomSheet
+    if (showCreateEditTemplateModal) {
+        CreateEditTemplateModal(
+            templateToEdit = selectedTemplateToEdit,
+            currencySymbol = currencySymbol,
+            onDismiss = {
+                showCreateEditTemplateModal = false
+                selectedTemplateToEdit = null
+            },
+            onSave = { title, category, amount, paymentMethod, note, frequency, isPlanned, iconName, colorHex ->
+                if (selectedTemplateToEdit == null) {
+                    viewModel.createExpenseTemplate(
+                        title = title,
+                        category = category,
+                        amount = amount,
+                        paymentMethod = paymentMethod,
+                        note = note,
+                        frequency = frequency,
+                        isPlanned = isPlanned,
+                        iconName = iconName,
+                        colorHex = colorHex
+                    )
+                } else {
+                    val updated = selectedTemplateToEdit!!.copy(
+                        title = title,
+                        category = category,
+                        amount = amount,
+                        paymentMethod = paymentMethod,
+                        note = note,
+                        frequency = frequency,
+                        isPlanned = isPlanned,
+                        iconName = iconName,
+                        colorHex = colorHex
+                    )
+                    viewModel.updateExpenseTemplate(updated)
+                }
+            },
+            onDelete = { template ->
+                viewModel.deleteExpenseTemplate(template)
             }
         )
     }

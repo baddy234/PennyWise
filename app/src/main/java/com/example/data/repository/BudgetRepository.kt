@@ -1,9 +1,11 @@
 package com.example.data.repository
 
 import com.example.data.local.dao.BudgetLimitDao
+import com.example.data.local.dao.ExpenseTemplateDao
 import com.example.data.local.dao.FundDao
 import com.example.data.local.dao.TransactionDao
 import com.example.data.local.entity.BudgetLimitEntity
+import com.example.data.local.entity.ExpenseTemplateEntity
 import com.example.data.local.entity.FundEntity
 import com.example.data.local.entity.TransactionEntity
 import com.example.notification.NotificationHelper
@@ -14,11 +16,13 @@ class BudgetRepository(
     private val transactionDao: TransactionDao,
     private val budgetLimitDao: BudgetLimitDao,
     private val fundDao: FundDao,
+    private val expenseTemplateDao: ExpenseTemplateDao,
     private val notificationHelper: NotificationHelper
 ) {
     val allTransactions: Flow<List<TransactionEntity>> = transactionDao.getAllTransactions()
     val allLimits: Flow<List<BudgetLimitEntity>> = budgetLimitDao.getAllLimits()
     val allFunds: Flow<List<FundEntity>> = fundDao.getAllFunds()
+    val allTemplates: Flow<List<ExpenseTemplateEntity>> = expenseTemplateDao.getAllTemplates()
 
     suspend fun insertTransaction(transaction: TransactionEntity): Long {
         val id = transactionDao.insertTransaction(transaction)
@@ -85,6 +89,19 @@ class BudgetRepository(
 
     suspend fun deleteFund(fund: FundEntity) {
         fundDao.deleteFund(fund)
+    }
+
+    // Expense Templates CRUD
+    suspend fun insertTemplate(template: ExpenseTemplateEntity): Long {
+        return expenseTemplateDao.insertTemplate(template)
+    }
+
+    suspend fun updateTemplate(template: ExpenseTemplateEntity) {
+        expenseTemplateDao.updateTemplate(template)
+    }
+
+    suspend fun deleteTemplate(template: ExpenseTemplateEntity) {
+        expenseTemplateDao.deleteTemplate(template)
     }
 
     suspend fun adjustFundBalance(fundId: Long, delta: Double) {

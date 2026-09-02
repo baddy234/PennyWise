@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -132,6 +133,20 @@ fun MoreNavigationModal(
             Spacer(modifier = Modifier.height(10.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                MoreNavItem(
+                    title = "Expense Templates & Plan",
+                    subtitle = "Create presets, monthly plan, & quick log expenses",
+                    icon = Icons.Default.ReceiptLong,
+                    accentColor = AccentEmerald,
+                    isSelected = currentTab == AppNavigationTab.EXPENSES,
+                    badgeText = "Templates",
+                    onClick = {
+                        onSelectTab(AppNavigationTab.EXPENSES)
+                        onDismiss()
+                    },
+                    testTag = "more_nav_expenses"
+                )
+
                 MoreNavItem(
                     title = "Reports & Analytics",
                     subtitle = "Financial breakdowns, graphs, and category trends",

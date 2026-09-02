@@ -63,15 +63,20 @@ import com.example.ui.theme.*
 import java.util.Calendar
 import java.util.Locale
 
+import androidx.compose.material.icons.filled.AutoAwesome
+import com.example.ui.modals.AutoBudgetPlannerModal
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetLimitsScreen(
     limits: List<BudgetLimitEntity>,
     transactions: List<TransactionEntity>,
     currencySymbol: String,
+    totalFundBalance: Double = 0.0,
     onAddLimitClick: () -> Unit,
     onEditLimitClick: (BudgetLimitEntity) -> Unit,
     onToggleLimit: (BudgetLimitEntity) -> Unit,
+    onApplyAutoBudget: (Map<String, Double>) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val cal = Calendar.getInstance()
@@ -107,6 +112,7 @@ fun BudgetLimitsScreen(
     val activeLimitsCount = limits.count { it.isEnabled }
 
     var showInfoModal by remember { mutableStateOf(false) }
+    var showAutoPlannerModal by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -211,7 +217,69 @@ fun BudgetLimitsScreen(
                 }
             }
 
-        // Notification Info Card
+            // Auto-Budget Planner Hero Card
+            item {
+                GlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showAutoPlannerModal = true }
+                        .testTag("open_auto_planner_card"),
+                    borderGlowColor = AccentCyan,
+                    backgroundColor = Color(0x3306B6D4)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(AccentCyan.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "Auto Plan",
+                                tint = AccentCyan,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Auto-Plan Expenses",
+                                    color = Slate50,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                ShadcnBadge(text = "Smart", variant = BadgeVariant.CYAN)
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Enter income or budget & auto-allocate categories",
+                                color = Slate300,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = null,
+                            tint = AccentCyan,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+
+            // Notification Info Card
         item {
             GlassCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -560,6 +628,16 @@ fun BudgetLimitsScreen(
                 )
             }
         }
+    }
+
+    if (showAutoPlannerModal) {
+        AutoBudgetPlannerModal(
+            totalFundBalance = totalFundBalance,
+            availableCategories = CategoryRegistry.defaultCategories.filter { !it.isIncome },
+            currencySymbol = currencySymbol,
+            onApplyAllocations = onApplyAutoBudget,
+            onDismiss = { showAutoPlannerModal = false }
+        )
     }
 }
 }

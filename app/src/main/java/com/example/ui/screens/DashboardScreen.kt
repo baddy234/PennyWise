@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -62,6 +63,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,10 +91,16 @@ import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Savings
 import com.example.data.local.entity.FundEntity
 import com.example.data.model.FinancialAdviceRepository
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.TrendingDown
+import com.example.ui.modals.BudgetForecastModal
 import com.example.ui.modals.CategoryBreakdownModal
 import com.example.ui.modals.DailyWisdomModal
 import com.example.ui.modals.SmartInsightsModal
 import com.example.ui.modals.SubscriptionsModal
+import com.example.ui.viewmodel.BudgetForecast
+import com.example.ui.viewmodel.ForecastHealth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +110,7 @@ fun DashboardScreen(
     funds: List<FundEntity> = emptyList(),
     selectedTimeframe: TimeframeFilter,
     periodSummary: PeriodSummary,
+    budgetForecast: BudgetForecast = BudgetForecast(),
     currencySymbol: String,
     onTimeframeChange: (TimeframeFilter) -> Unit,
     onAddTransactionClick: () -> Unit,
@@ -120,6 +129,7 @@ fun DashboardScreen(
     var showCategoryModal by remember { mutableStateOf(false) }
     var showSubscriptionsModal by remember { mutableStateOf(false) }
     var showSmartInsightsModal by remember { mutableStateOf(false) }
+    var showForecastModal by remember { mutableStateOf(false) }
 
     val todayAdvice = remember { FinancialAdviceRepository.getTodayAdvice() }
     val greeting = remember { FinancialAdviceRepository.getTimeBasedGreeting() }
@@ -146,6 +156,8 @@ fun DashboardScreen(
             "Long-range annual cashflow & total accruals"
         )
     )
+
+    val isDark = isAppInDarkTheme()
 
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -183,14 +195,14 @@ fun DashboardScreen(
                         Column {
                             Text(
                                 text = "PennyWise",
-                                color = Slate50,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 letterSpacing = (-0.5).sp
                             )
                             Text(
                                 text = "$greeting 👋",
-                                color = Slate400,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -198,11 +210,12 @@ fun DashboardScreen(
                     }
 
                     // Live Local Status Pill
+                    val isDark = isAppInDarkTheme()
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
-                            .background(Slate900.copy(alpha = 0.8f))
-                            .border(1.dp, Slate800, RoundedCornerShape(20.dp))
+                            .background(if (isDark) Slate900.copy(alpha = 0.8f) else Slate100)
+                            .border(1.dp, if (isDark) Slate800 else Slate300, RoundedCornerShape(20.dp))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -231,14 +244,23 @@ fun DashboardScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
                         .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Slate900.copy(alpha = 0.95f),
-                                    Slate950.copy(alpha = 0.95f)
+                            if (isDark) {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Slate900.copy(alpha = 0.95f),
+                                        Slate950.copy(alpha = 0.95f)
+                                    )
                                 )
-                            )
+                            } else {
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Color(0xFFF1F5F9),
+                                        Color(0xFFE2E8F0)
+                                    )
+                                )
+                            }
                         )
-                        .border(1.dp, AccentCyan.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                        .border(1.dp, if (isDark) AccentCyan.copy(alpha = 0.25f) else AccentCyan.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
                         .clickable { showDailyWisdomModal = true }
                         .testTag("welcome_daily_wisdom_banner")
                 ) {
@@ -279,7 +301,7 @@ fun DashboardScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "“${todayAdvice.quote}”",
-                                color = Slate200,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 13.sp,
                                 fontStyle = FontStyle.Italic,
                                 lineHeight = 18.sp,
@@ -287,7 +309,7 @@ fun DashboardScreen(
                             )
                             Text(
                                 text = "— ${todayAdvice.author}  •  Daily Wisdom 💡",
-                                color = AccentCyan,
+                                color = if (isDark) AccentCyan else Color(0xFF0284C7),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.padding(top = 4.dp)
@@ -308,8 +330,8 @@ fun DashboardScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(14.dp))
-                            .background(Slate900.copy(alpha = 0.9f))
-                            .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                            .background(if (isDark) Slate900.copy(alpha = 0.9f) else Color.White)
+                            .border(1.dp, if (isDark) Slate800 else Slate300, RoundedCornerShape(14.dp))
                             .clickable { showTimeframeModal = true }
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                             .testTag("timeframe_selector_pill"),
@@ -327,14 +349,14 @@ fun DashboardScreen(
                             )
                             Text(
                                 text = selectedTimeframe.displayName,
-                                color = Slate100,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
                                 contentDescription = "Open Timeframe Modal",
-                                tint = Slate400,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -344,8 +366,8 @@ fun DashboardScreen(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(14.dp))
-                            .background(Slate900.copy(alpha = 0.9f))
-                            .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                            .background(if (isDark) Slate900.copy(alpha = 0.9f) else Color.White)
+                            .border(1.dp, if (isDark) Slate800 else Slate300, RoundedCornerShape(14.dp))
                             .clickable { showPeriodInfoModal = true }
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                             .testTag("dashboard_info_modal_button"),
@@ -363,7 +385,7 @@ fun DashboardScreen(
                             )
                             Text(
                                 text = "Diagnostics",
-                                color = Slate200,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -561,6 +583,170 @@ fun DashboardScreen(
                                         Text("No active budget cap set", color = Slate400, fontSize = 11.sp)
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ==========================================
+            // BUDGET FORECAST WIDGET
+            // ==========================================
+            item {
+                val forecastHealthText = when (budgetForecast.healthStatus) {
+                    ForecastHealth.ON_TRACK -> "On Track"
+                    ForecastHealth.CAUTION -> "Caution Needed"
+                    ForecastHealth.OVER_BUDGET -> "Over Budget Projected"
+                }
+
+                val forecastBadgeVariant = when (budgetForecast.healthStatus) {
+                    ForecastHealth.ON_TRACK -> BadgeVariant.SUCCESS
+                    ForecastHealth.CAUTION -> BadgeVariant.WARNING
+                    ForecastHealth.OVER_BUDGET -> BadgeVariant.DESTRUCTIVE
+                }
+
+                val forecastColor = when (budgetForecast.healthStatus) {
+                    ForecastHealth.ON_TRACK -> AccentEmerald
+                    ForecastHealth.CAUTION -> Color(0xFFF59E0B)
+                    ForecastHealth.OVER_BUDGET -> AccentRose
+                }
+
+                GlassCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("budget_forecast_widget"),
+                    onClick = { showForecastModal = true }
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(AccentViolet.copy(alpha = 0.2f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ShowChart,
+                                        contentDescription = "Budget Forecast",
+                                        tint = AccentViolet,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f, fill = false)) {
+                                    Text(
+                                        text = "BUDGET FORECAST",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = "End-of-Month Projection",
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(6.dp))
+
+                            ShadcnBadge(
+                                text = forecastHealthText,
+                                variant = forecastBadgeVariant
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                Text(
+                                    text = "Projected EOM Remaining",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "$currencySymbol${String.format(Locale.US, "%,.2f", budgetForecast.projectedRemainingBalance)}",
+                                    color = forecastColor,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    text = "Daily Burn Rate",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 10.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "$currencySymbol${String.format(Locale.US, "%.2f", budgetForecast.averageDailySpend)}/day",
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isDark) Slate900.copy(alpha = 0.6f) else Slate100)
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "⚡ Target Pace: $currencySymbol${String.format(Locale.US, "%.2f", budgetForecast.recommendedDailyAllowance)}/day remaining",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Analysis →",
+                                    color = AccentViolet,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                     }
@@ -1183,6 +1369,14 @@ fun DashboardScreen(
                 onAddTransactionClick()
             },
             onPostPaymentNow = onPostPaymentNow
+        )
+    }
+
+    if (showForecastModal) {
+        BudgetForecastModal(
+            forecast = budgetForecast,
+            currencySymbol = currencySymbol,
+            onDismiss = { showForecastModal = false }
         )
     }
 }

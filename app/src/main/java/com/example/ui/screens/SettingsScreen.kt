@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -70,6 +71,9 @@ import com.example.ui.theme.*
 
 import com.example.ui.modals.SecuritySettingsModal
 
+import androidx.compose.material.icons.filled.Palette
+import com.example.ui.theme.AppThemeMode
+
 data class CurrencyOption(
     val symbol: String,
     val code: String,
@@ -85,6 +89,8 @@ fun SettingsScreen(
     currentPin: String = "1234",
     transactionCount: Int,
     limitCount: Int,
+    themeMode: AppThemeMode = AppThemeMode.SYSTEM,
+    onThemeModeChange: (AppThemeMode) -> Unit = {},
     onCurrencyChange: (String) -> Unit,
     onNotificationToggle: (Boolean) -> Unit,
     onSavePinSettings: (Boolean, String) -> Unit = { _, _ -> },
@@ -98,6 +104,7 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     // Modal Visibility States
+    var showThemeModal by remember { mutableStateOf(false) }
     var showCurrencyModal by remember { mutableStateOf(false) }
     var showNotificationsModal by remember { mutableStateOf(false) }
     var showSecurityModal by remember { mutableStateOf(false) }
@@ -145,14 +152,14 @@ fun SettingsScreen(
                 Column {
                     Text(
                         text = "Settings",
-                        color = Slate50,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.5).sp
                     )
                     Text(
                         text = "Preferences, notifications, data & security",
-                        color = Slate400,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
                 }
@@ -168,7 +175,7 @@ fun SettingsScreen(
         item {
             Text(
                 text = "PREFERENCES",
-                color = Slate400,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
@@ -179,6 +186,25 @@ fun SettingsScreen(
         item {
             GlassCard(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    // Theme & Appearance Setting Row
+                    SettingItemRow(
+                        icon = Icons.Default.Palette,
+                        iconTint = AccentViolet,
+                        iconBg = AccentViolet.copy(alpha = 0.15f),
+                        title = "App Theme & Appearance",
+                        subtitle = when (themeMode) {
+                            AppThemeMode.SYSTEM -> "System Default • Follows Android device theme"
+                            AppThemeMode.DARK -> "Dark Glass • Obsidian canvas & glowing accents"
+                            AppThemeMode.LIGHT -> "Light Glass • Frosted slate canvas & crisp text"
+                        },
+                        trailingBadge = themeMode.displayName,
+                        badgeVariant = BadgeVariant.CYAN,
+                        onClick = { showThemeModal = true },
+                        testTag = "setting_theme_row"
+                    )
+
+                    SettingDivider()
+
                     // Currency Selection Setting Row
                     SettingItemRow(
                         icon = Icons.Default.AttachMoney,
@@ -228,7 +254,7 @@ fun SettingsScreen(
         item {
             Text(
                 text = "DATA & STORAGE",
-                color = Slate400,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
@@ -274,7 +300,7 @@ fun SettingsScreen(
         item {
             Text(
                 text = "APPLICATION",
-                color = Slate400,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
@@ -302,6 +328,121 @@ fun SettingsScreen(
 
         item {
             Spacer(modifier = Modifier.height(80.dp))
+        }
+    }
+
+    // ==========================================
+    // MODAL 0: THEME SELECTION MODAL
+    // ==========================================
+    if (showThemeModal) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val isDark = isAppInDarkTheme()
+        ModalBottomSheet(
+            onDismissRequest = { showThemeModal = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            scrimColor = Color.Black.copy(alpha = 0.5f),
+            dragHandle = { ModalDragHandle() }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Glassmorphic Theme Mode",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = (-0.4).sp
+                        )
+                        Text(
+                            text = "Select system-wide visual appearance",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    ShadcnBadge(
+                        text = themeMode.displayName,
+                        variant = BadgeVariant.CYAN
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                val themeOptions = listOf(
+                    Triple(AppThemeMode.LIGHT, "Light Glass", "Clean frosted slate canvas with high contrast dark text"),
+                    Triple(AppThemeMode.DARK, "Dark Glass", "Sleek obsidian canvas with glowing neon ambient accents"),
+                    Triple(AppThemeMode.SYSTEM, "System Default", "Automatically match your Android device light/dark mode")
+                )
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    themeOptions.forEach { (mode, title, desc) ->
+                        val isSelected = themeMode == mode
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(if (isSelected) AccentViolet.copy(alpha = if (isDark) 0.18f else 0.12f) else if (isDark) Slate900 else Slate100)
+                                .border(
+                                    1.dp,
+                                    if (isSelected) AccentViolet.copy(alpha = 0.8f) else if (isDark) Slate800 else Slate300,
+                                    RoundedCornerShape(14.dp)
+                                )
+                                .clickable {
+                                    onThemeModeChange(mode)
+                                    showThemeModal = false
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = title,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 15.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = desc,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 12.sp
+                                )
+                            }
+
+                            if (isSelected) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(AccentViolet),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "Selected",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1144,13 +1285,13 @@ private fun SettingItemRow(
             Column {
                 Text(
                     text = title,
-                    color = Slate50,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = subtitle,
-                    color = Slate400,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp,
                     maxLines = 1
                 )
@@ -1170,7 +1311,7 @@ private fun SettingItemRow(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = null,
-                tint = Slate500,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(14.dp)
             )
         }
@@ -1184,7 +1325,7 @@ private fun SettingDivider() {
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .height(1.dp)
-            .background(Slate800.copy(alpha = 0.6f))
+            .background(if (isAppInDarkTheme()) Slate800.copy(alpha = 0.6f) else Slate200)
     )
 }
 
@@ -1196,6 +1337,6 @@ private fun ModalDragHandle() {
             .width(40.dp)
             .height(4.dp)
             .clip(RoundedCornerShape(2.dp))
-            .background(Slate700)
+            .background(if (isAppInDarkTheme()) Slate700 else Slate300)
     )
 }
