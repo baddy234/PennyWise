@@ -61,7 +61,11 @@ import com.example.ui.components.CategorySpendItem
 import com.example.ui.components.DonutSpendChart
 import com.example.ui.components.GlassButton
 import com.example.ui.components.GlassCard
+import com.example.ui.components.MonthlyTrendVsLimitItem
+import com.example.ui.components.RechartsSpendingTrendChart
 import com.example.ui.components.ShadcnBadge
+import com.example.ui.modals.CategoryBreakdownModal
+import com.example.ui.modals.SmartInsightsModal
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.InsightType
 import com.example.ui.viewmodel.PeriodSummary
@@ -85,6 +89,8 @@ fun ReportsScreen(
     modifier: Modifier = Modifier
 ) {
     var showTimeframeModal by remember { mutableStateOf(false) }
+    var showCategoryBreakdownModal by remember { mutableStateOf(false) }
+    var showSmartInsightsModal by remember { mutableStateOf(false) }
 
     val timeframeDetails = listOf(
         Triple(TimeframeFilter.DAILY, "Daily Analytics", "Analyze today's timestamped expenses"),
@@ -258,7 +264,8 @@ fun ReportsScreen(
                     DonutSpendChart(
                         items = categoryBreakdown,
                         totalAmount = periodSummary.totalExpense,
-                        currencySymbol = currencySymbol
+                        currencySymbol = currencySymbol,
+                        onCategoryClick = { showCategoryBreakdownModal = true }
                     )
                 }
             }
@@ -290,7 +297,7 @@ fun ReportsScreen(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Spending Timeline",
-                                color = Slate50,
+                                color = textPrimaryColor(),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -303,7 +310,7 @@ fun ReportsScreen(
                                 TimeframeFilter.MONTHLY -> "Last 6 Months"
                                 TimeframeFilter.YEARLY -> "Last 4 Years"
                             },
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 11.sp
                         )
                     }
@@ -318,25 +325,100 @@ fun ReportsScreen(
             }
         }
 
-        // Spending Insights Cards
+        // Recharts Dual Axis Trend vs Limit Chart
+        item {
+            val monthlyTrends = remember(transactions, limits) {
+                val expenses = transactions.filter { it.type == "EXPENSE" }
+                val monthlyLimitObj = limits.find { it.periodType == "MONTHLY" && it.isEnabled }
+                val explicitLimit = monthlyLimitObj?.limitAmount ?: 0.0
+                val categoryMonthlyTotal = limits.filter { it.periodType == "CATEGORY" && it.isEnabled }.sumOf { it.limitAmount }
+                val activeLimit = if (explicitLimit > 0) explicitLimit else if (categoryMonthlyTotal > 0) categoryMonthlyTotal else 1500.0
+
+                val monthFormat = java.text.SimpleDateFormat("MMM", java.util.Locale.getDefault())
+                val fullFormat = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.getDefault())
+
+                val result = mutableListOf<MonthlyTrendVsLimitItem>()
+                val nowCal = java.util.Calendar.getInstance()
+                val currentMonthIdx = nowCal.get(java.util.Calendar.MONTH)
+                val currentYearIdx = nowCal.get(java.util.Calendar.YEAR)
+
+                for (m in 5 downTo 0) {
+                    val c = java.util.Calendar.getInstance()
+                    c.add(java.util.Calendar.MONTH, -m)
+                    c.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                    c.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    c.set(java.util.Calendar.MINUTE, 0)
+                    c.set(java.util.Calendar.SECOND, 0)
+                    c.set(java.util.Calendar.MILLISECOND, 0)
+                    val startMs = c.timeInMillis
+
+                    c.add(java.util.Calendar.MONTH, 1)
+                    val endMs = c.timeInMillis
+
+                    val monthSpend = expenses.filter { it.dateMillis in startMs until endMs }.sumOf { it.amount }
+
+                    c.timeInMillis = startMs
+                    val isCurrent = (c.get(java.util.Calendar.MONTH) == currentMonthIdx && c.get(java.util.Calendar.YEAR) == currentYearIdx)
+
+                    result.add(
+                        MonthlyTrendVsLimitItem(
+                            monthLabel = monthFormat.format(java.util.Date(startMs)),
+                            fullMonthName = fullFormat.format(java.util.Date(startMs)),
+                            actualSpending = monthSpend,
+                            setLimit = activeLimit,
+                            isCurrentMonth = isCurrent
+                        )
+                    )
+                }
+                result
+            }
+
+            RechartsSpendingTrendChart(
+                items = monthlyTrends,
+                currencySymbol = currencySymbol,
+                modifier = Modifier.testTag("reports_recharts_trend_chart")
+            )
+        }
+
+        // Spending Insights Cards Header
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = null,
-                    tint = Color(0xFFFBBF24),
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Financial Insights",
-                    color = Slate50,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color(0xFFFBBF24),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "AI Financial Insights",
+                        color = textPrimaryColor(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(AccentCyan.copy(alpha = 0.15f))
+                        .border(1.dp, AccentCyan.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                        .clickable { showSmartInsightsModal = true }
+                        .padding(horizontal = 10.dp, vertical = 5.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Deep-Dive AI",
+                        color = AccentCyan,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
 
@@ -351,7 +433,8 @@ fun ReportsScreen(
             GlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 borderGlowColor = border.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
+                onClick = { showSmartInsightsModal = true }
             ) {
                 Row(
                     modifier = Modifier
@@ -379,14 +462,14 @@ fun ReportsScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = insight.title,
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = insight.description,
-                            color = Slate300,
+                            color = textSecondaryColor(),
                             fontSize = 12.sp,
                             lineHeight = 17.sp
                         )
@@ -395,14 +478,29 @@ fun ReportsScreen(
             }
         }
 
-        // Categorized Breakdown Detail List
+        // Categorized Breakdown Detail List Header
         item {
-            Text(
-                text = "Categorized Breakdown",
-                color = Slate50,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Categorized Breakdown",
+                    color = textPrimaryColor(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (categoryBreakdown.isNotEmpty()) {
+                    Text(
+                        text = "Tap for transactions",
+                        color = textMutedColor(),
+                        fontSize = 11.sp,
+                        modifier = Modifier.clickable { showCategoryBreakdownModal = true }
+                    )
+                }
+            }
         }
 
         if (categoryBreakdown.isEmpty()) {
@@ -414,7 +512,7 @@ fun ReportsScreen(
                             .padding(20.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No spending in this timeframe", color = Slate400, fontSize = 13.sp)
+                        Text("No spending in this timeframe", color = textMutedColor(), fontSize = 13.sp)
                     }
                 }
             }
@@ -422,7 +520,8 @@ fun ReportsScreen(
             item {
                 GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(20.dp),
+                    onClick = { showCategoryBreakdownModal = true }
                 ) {
                     Column(
                         modifier = Modifier
@@ -447,6 +546,26 @@ fun ReportsScreen(
             Spacer(modifier = Modifier.height(60.dp))
         }
     }
+
+    // ==========================================
+    // MODALS: CATEGORY BREAKDOWN & AI INSIGHTS
+    // ==========================================
+    if (showCategoryBreakdownModal) {
+        CategoryBreakdownModal(
+            transactions = transactions,
+            currencySymbol = currencySymbol,
+            onDismiss = { showCategoryBreakdownModal = false }
+        )
+    }
+
+    if (showSmartInsightsModal) {
+        SmartInsightsModal(
+            periodSummary = periodSummary,
+            transactions = transactions,
+            currencySymbol = currencySymbol,
+            onDismiss = { showSmartInsightsModal = false }
+        )
+    }
 }
 
     // ==========================================
@@ -457,7 +576,7 @@ fun ReportsScreen(
         ModalBottomSheet(
             onDismissRequest = { showTimeframeModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = {
                 Box(
@@ -466,7 +585,7 @@ fun ReportsScreen(
                         .width(40.dp)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Slate700)
+                        .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
                 )
             }
         ) {

@@ -78,7 +78,7 @@ fun TopUpFundModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -87,7 +87,7 @@ fun TopUpFundModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -123,14 +123,14 @@ fun TopUpFundModal(
                 Column {
                     Text(
                         text = "Add Funds",
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.4).sp
                     )
                     Text(
                         text = "Deposit to ${fund.name}",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 13.sp
                     )
                 }
@@ -143,8 +143,8 @@ fun TopUpFundModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Slate900.copy(alpha = 0.9f))
-                    .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                     .padding(16.dp)
             ) {
                 Row(
@@ -155,13 +155,13 @@ fun TopUpFundModal(
                     Column {
                         Text(
                             text = "Current Balance",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
                             text = "$currencySymbol${String.format(Locale.US, "%,.2f", currentBal)}",
-                            color = Slate200,
+                            color = textSecondaryColor(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -201,8 +201,8 @@ fun TopUpFundModal(
                         amountStr = it
                     }
                 },
-                label = { Text("Deposit Amount", color = Slate400) },
-                placeholder = { Text("0.00", color = Slate600) },
+                label = { Text("Deposit Amount", color = textMutedColor()) },
+                placeholder = { Text("0.00", color = textMutedColor().copy(alpha = 0.6f)) },
                 leadingIcon = {
                     Text(
                         text = currencySymbol,
@@ -214,14 +214,7 @@ fun TopUpFundModal(
                 },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = AccentEmerald,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentEmerald),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -240,8 +233,8 @@ fun TopUpFundModal(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Slate900)
-                            .border(1.dp, Slate800, RoundedCornerShape(10.dp))
+                            .background(glassSurfaceBgColor())
+                            .border(1.dp, glassBorderColor(), RoundedCornerShape(10.dp))
                             .clickable {
                                 val current = amountStr.toDoubleOrNull() ?: 0.0
                                 amountStr = String.format(Locale.US, "%.2f", current + chipAmt)
@@ -264,17 +257,10 @@ fun TopUpFundModal(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("Memo / Source (Optional)", color = Slate400) },
-                placeholder = { Text("e.g. Paycheck deposit, bonus, transfer", color = Slate600) },
+                label = { Text("Memo / Source (Optional)", color = textMutedColor()) },
+                placeholder = { Text("e.g. Paycheck deposit, bonus, transfer", color = textMutedColor().copy(alpha = 0.6f)) },
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -295,7 +281,7 @@ fun TopUpFundModal(
                     onCheckedChange = { recordAsIncome = it },
                     colors = CheckboxDefaults.colors(
                         checkedColor = AccentEmerald,
-                        uncheckedColor = Slate600,
+                        uncheckedColor = textMutedColor(),
                         checkmarkColor = Color.Black
                     )
                 )
@@ -303,13 +289,13 @@ fun TopUpFundModal(
                 Column {
                     Text(
                         text = "Log as Income transaction in history",
-                        color = Slate200,
+                        color = textSecondaryColor(),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "Adds an entry to your transactions log for accurate reports",
-                        color = Slate500,
+                        color = textMutedColor(),
                         fontSize = 11.sp
                     )
                 }

@@ -454,7 +454,7 @@ fun SettingsScreen(
         ModalBottomSheet(
             onDismissRequest = { showCurrencyModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = { ModalDragHandle() }
         ) {
@@ -580,7 +580,7 @@ fun SettingsScreen(
         ModalBottomSheet(
             onDismissRequest = { showNotificationsModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = { ModalDragHandle() }
         ) {
@@ -760,7 +760,7 @@ fun SettingsScreen(
         ModalBottomSheet(
             onDismissRequest = { showBackupModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = { ModalDragHandle() }
         ) {
@@ -1012,7 +1012,7 @@ fun SettingsScreen(
         ModalBottomSheet(
             onDismissRequest = { showDangerZoneModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = { ModalDragHandle() }
         ) {
@@ -1133,7 +1133,7 @@ fun SettingsScreen(
         ModalBottomSheet(
             onDismissRequest = { showAboutModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = { ModalDragHandle() }
         ) {

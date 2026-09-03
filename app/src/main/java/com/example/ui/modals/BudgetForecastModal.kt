@@ -1,5 +1,6 @@
 package com.example.ui.modals
 
+import com.example.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement

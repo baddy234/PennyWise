@@ -95,7 +95,7 @@ fun CreateEditFundModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -104,7 +104,7 @@ fun CreateEditFundModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -143,14 +143,14 @@ fun CreateEditFundModal(
                     Column {
                         Text(
                             text = if (fundToEdit == null) "Create New Fund" else "Edit Fund",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.4).sp
                         )
                         Text(
                             text = "Manage money buckets & targets",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal
                         )
@@ -183,7 +183,7 @@ fun CreateEditFundModal(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Slate900)
+                            .background(glassSurfaceBgColor())
                             .border(1.dp, AccentCyan.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                             .clickable { showPresetDropdown = true }
                             .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -200,7 +200,7 @@ fun CreateEditFundModal(
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = "Autofill from Quick Preset",
-                                color = Slate200,
+                                color = textSecondaryColor(),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -208,7 +208,7 @@ fun CreateEditFundModal(
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = "Select Preset",
-                            tint = Slate400
+                            tint = textMutedColor()
                         )
                     }
 
@@ -216,15 +216,15 @@ fun CreateEditFundModal(
                         expanded = showPresetDropdown,
                         onDismissRequest = { showPresetDropdown = false },
                         modifier = Modifier
-                            .background(Slate900)
-                            .border(1.dp, Slate800, RoundedCornerShape(12.dp))
+                            .background(glassModalContainerColor())
+                            .border(1.dp, glassBorderColor(), RoundedCornerShape(12.dp))
                     ) {
                         presetNames.forEach { preset ->
                             DropdownMenuItem(
                                 text = {
                                     Text(
                                         text = preset,
-                                        color = Slate100,
+                                        color = textPrimaryColor(),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -252,17 +252,10 @@ fun CreateEditFundModal(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Fund / Account Name", color = Slate400) },
-                placeholder = { Text("e.g. Main Bank, Travel Stash", color = Slate600) },
+                label = { Text("Fund / Account Name", color = textMutedColor()) },
+                placeholder = { Text("e.g. Main Bank, Travel Stash", color = textMutedColor().copy(alpha = 0.7f)) },
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -283,7 +276,7 @@ fun CreateEditFundModal(
                             balanceStr = it
                         }
                     },
-                    label = { Text("Current Balance", color = Slate400) },
+                    label = { Text("Current Balance", color = textMutedColor()) },
                     leadingIcon = {
                         Text(
                             text = currencySymbol,
@@ -295,14 +288,7 @@ fun CreateEditFundModal(
                     },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Slate50,
-                        unfocusedTextColor = Slate200,
-                        focusedBorderColor = AccentEmerald,
-                        unfocusedBorderColor = Slate700,
-                        focusedContainerColor = Slate900,
-                        unfocusedContainerColor = Slate900
-                    ),
+                    colors = appTextFieldColors(focusedBorderColor = AccentEmerald),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .weight(1f)
@@ -316,8 +302,8 @@ fun CreateEditFundModal(
                             targetStr = it
                         }
                     },
-                    label = { Text("Target Goal (Opt.)", color = Slate400) },
-                    placeholder = { Text("None", color = Slate600) },
+                    label = { Text("Target Goal (Opt.)", color = textMutedColor()) },
+                    placeholder = { Text("None", color = textMutedColor().copy(alpha = 0.7f)) },
                     leadingIcon = {
                         Text(
                             text = currencySymbol,
@@ -329,14 +315,7 @@ fun CreateEditFundModal(
                     },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Slate50,
-                        unfocusedTextColor = Slate200,
-                        focusedBorderColor = AccentCyan,
-                        unfocusedBorderColor = Slate700,
-                        focusedContainerColor = Slate900,
-                        unfocusedContainerColor = Slate900
-                    ),
+                    colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .weight(1f)
@@ -349,7 +328,7 @@ fun CreateEditFundModal(
             // Decluttered Customization Row (Icon Modal Trigger & Color Modal Trigger)
             Text(
                 text = "Appearance & Customization",
-                color = Slate400,
+                color = textMutedColor(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -364,8 +343,8 @@ fun CreateEditFundModal(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Slate900)
-                        .border(1.dp, Slate700, RoundedCornerShape(14.dp))
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                         .clickable { showIconPickerModal = true }
                         .padding(horizontal = 12.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -381,7 +360,7 @@ fun CreateEditFundModal(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = selectedIconName,
-                            color = Slate100,
+                            color = textPrimaryColor(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -389,7 +368,7 @@ fun CreateEditFundModal(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = "Change Icon",
-                        tint = Slate400
+                        tint = textMutedColor()
                     )
                 }
 
@@ -399,8 +378,8 @@ fun CreateEditFundModal(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Slate900)
-                        .border(1.dp, Slate700, RoundedCornerShape(14.dp))
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                         .clickable { showColorPickerModal = true }
                         .padding(horizontal = 12.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -416,7 +395,7 @@ fun CreateEditFundModal(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = colorOption?.label ?: "Theme",
-                            color = Slate100,
+                            color = textPrimaryColor(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -424,7 +403,7 @@ fun CreateEditFundModal(
                     Icon(
                         imageVector = Icons.Default.Palette,
                         contentDescription = "Change Color",
-                        tint = Slate400,
+                        tint = textMutedColor(),
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -436,17 +415,10 @@ fun CreateEditFundModal(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("Note / Purpose (Optional)", color = Slate400) },
-                placeholder = { Text("e.g. Account number, rainy day goal", color = Slate600) },
+                label = { Text("Note / Purpose (Optional)", color = textMutedColor()) },
+                placeholder = { Text("e.g. Account number, rainy day goal", color = textMutedColor().copy(alpha = 0.7f)) },
                 maxLines = 2,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -488,11 +460,11 @@ fun CreateEditFundModal(
     if (showIconPickerModal) {
         AlertDialog(
             onDismissRequest = { showIconPickerModal = false },
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             title = {
                 Text(
                     text = "Select Fund Icon",
-                    color = Slate50,
+                    color = textPrimaryColor(),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -510,10 +482,10 @@ fun CreateEditFundModal(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) activeColor.copy(alpha = 0.25f) else Slate900)
+                                .background(if (isSelected) activeColor.copy(alpha = 0.25f) else glassSurfaceBgColor())
                                 .border(
                                     1.dp,
-                                    if (isSelected) activeColor else Slate800,
+                                    if (isSelected) activeColor else glassBorderColor(),
                                     RoundedCornerShape(12.dp)
                                 )
                                 .clickable {
@@ -526,13 +498,13 @@ fun CreateEditFundModal(
                             Icon(
                                 imageVector = opt.icon,
                                 contentDescription = opt.label,
-                                tint = if (isSelected) activeColor else Slate400,
+                                tint = if (isSelected) activeColor else textMutedColor(),
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = opt.label,
-                                color = if (isSelected) Slate50 else Slate300,
+                                color = if (isSelected) textPrimaryColor() else textSecondaryColor(),
                                 fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 maxLines = 1
@@ -553,11 +525,11 @@ fun CreateEditFundModal(
     if (showColorPickerModal) {
         AlertDialog(
             onDismissRequest = { showColorPickerModal = false },
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             title = {
                 Text(
                     text = "Select Color Theme",
-                    color = Slate50,
+                    color = textPrimaryColor(),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -574,10 +546,10 @@ fun CreateEditFundModal(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) opt.color.copy(alpha = 0.25f) else Slate900)
+                                .background(if (isSelected) opt.color.copy(alpha = 0.25f) else glassSurfaceBgColor())
                                 .border(
                                     1.dp,
-                                    if (isSelected) opt.color else Slate800,
+                                    if (isSelected) opt.color else glassBorderColor(),
                                     RoundedCornerShape(12.dp)
                                 )
                                 .clickable {
@@ -606,7 +578,7 @@ fun CreateEditFundModal(
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = opt.label,
-                                color = if (isSelected) Slate50 else Slate300,
+                                color = if (isSelected) textPrimaryColor() else textSecondaryColor(),
                                 fontSize = 13.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )

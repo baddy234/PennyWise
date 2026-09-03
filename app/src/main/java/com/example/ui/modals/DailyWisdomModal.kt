@@ -56,7 +56,7 @@ fun DailyWisdomModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -65,7 +65,7 @@ fun DailyWisdomModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -100,14 +100,14 @@ fun DailyWisdomModal(
                 Column {
                     Text(
                         text = "Daily Financial Wisdom",
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.4).sp
                     )
                     Text(
                         text = "Timeless money rules & action tips",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 12.sp
                     )
                 }
@@ -126,8 +126,8 @@ fun DailyWisdomModal(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Slate900)
-                            .border(1.dp, Slate800, RoundedCornerShape(16.dp))
+                            .background(glassSurfaceBgColor())
+                            .border(1.dp, glassBorderColor(), RoundedCornerShape(16.dp))
                             .padding(16.dp)
                     ) {
                         Column {
@@ -139,7 +139,7 @@ fun DailyWisdomModal(
                                 Icon(
                                     imageVector = Icons.Default.FormatQuote,
                                     contentDescription = null,
-                                    tint = Slate600,
+                                    tint = textMutedColor(),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -148,7 +148,7 @@ fun DailyWisdomModal(
 
                             Text(
                                 text = "“${item.quote}”",
-                                color = Slate100,
+                                color = textPrimaryColor(),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
                                 fontStyle = FontStyle.Italic,
@@ -169,7 +169,7 @@ fun DailyWisdomModal(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(Slate950)
+                                    .background(glassSurfaceBgColor().copy(alpha = 0.5f))
                                     .padding(10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -182,7 +182,7 @@ fun DailyWisdomModal(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = item.actionTip,
-                                    color = Slate300,
+                                    color = textSecondaryColor(),
                                     fontSize = 12.sp,
                                     lineHeight = 16.sp
                                 )

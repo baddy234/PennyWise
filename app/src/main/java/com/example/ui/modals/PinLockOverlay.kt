@@ -73,10 +73,12 @@ fun PinLockOverlay(
         }
     }
 
+    val isDark = isAppInDarkTheme()
+
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Slate950)
+            .background(if (isDark) Slate950 else Color(0xFFF8FAFC))
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -113,7 +115,7 @@ fun PinLockOverlay(
 
             Text(
                 text = "PennyWise Security",
-                color = Slate50,
+                color = textPrimaryColor(),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = (-0.5).sp
@@ -121,7 +123,7 @@ fun PinLockOverlay(
 
             Text(
                 text = "Enter your 4-digit PIN to access financial records",
-                color = Slate400,
+                color = textMutedColor(),
                 fontSize = 13.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )
@@ -140,11 +142,11 @@ fun PinLockOverlay(
                             .size(18.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isFilled) AccentCyan else Slate800
+                                if (isFilled) AccentCyan else (if (isDark) Slate800 else Color(0xFFE2E8F0))
                             )
                             .border(
                                 1.dp,
-                                if (isFilled) AccentCyan else Slate700,
+                                if (isFilled) AccentCyan else (if (isDark) Slate700 else Color(0xFFCBD5E1)),
                                 CircleShape
                             )
                     )
@@ -189,8 +191,8 @@ fun PinLockOverlay(
                                     modifier = Modifier
                                         .size(68.dp)
                                         .clip(CircleShape)
-                                        .background(Slate900)
-                                        .border(1.dp, Slate800, CircleShape)
+                                        .background(glassSurfaceBgColor())
+                                        .border(1.dp, glassBorderColor(), CircleShape)
                                         .clickable { onDeletePress() }
                                         .testTag("pin_delete_button"),
                                     contentAlignment = Alignment.Center
@@ -198,7 +200,7 @@ fun PinLockOverlay(
                                     Icon(
                                         imageVector = Icons.Default.Backspace,
                                         contentDescription = "Delete Digit",
-                                        tint = Slate300,
+                                        tint = textSecondaryColor(),
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -207,15 +209,15 @@ fun PinLockOverlay(
                                     modifier = Modifier
                                         .size(68.dp)
                                         .clip(CircleShape)
-                                        .background(Slate900)
-                                        .border(1.dp, Slate800, CircleShape)
+                                        .background(glassSurfaceBgColor())
+                                        .border(1.dp, glassBorderColor(), CircleShape)
                                         .clickable { onKeyPress(key) }
                                         .testTag("pin_key_$key"),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = key,
-                                        color = Slate50,
+                                        color = textPrimaryColor(),
                                         fontSize = 24.sp,
                                         fontWeight = FontWeight.Bold
                                     )

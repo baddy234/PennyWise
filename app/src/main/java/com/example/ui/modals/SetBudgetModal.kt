@@ -90,7 +90,7 @@ fun SetBudgetModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -99,7 +99,7 @@ fun SetBudgetModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -119,7 +119,7 @@ fun SetBudgetModal(
             ) {
                 Text(
                     text = if (limitToEdit == null) "Set Budget Limit" else "Edit Budget Limit",
-                    color = Slate50,
+                    color = textPrimaryColor(),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.4).sp
@@ -147,7 +147,7 @@ fun SetBudgetModal(
             // Period Selector
             Text(
                 text = "Budget Target Period",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -158,8 +158,8 @@ fun SetBudgetModal(
                     .fillMaxWidth()
                     .height(40.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Slate900)
-                    .border(1.dp, Slate800, RoundedCornerShape(10.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(10.dp))
                     .padding(2.dp)
             ) {
                 periods.forEach { (key, label) ->
@@ -178,7 +178,7 @@ fun SetBudgetModal(
                     ) {
                         Text(
                             text = label,
-                            color = if (isSelected) Color.White else Slate400,
+                            color = if (isSelected) Color.White else textMutedColor(),
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
@@ -191,7 +191,7 @@ fun SetBudgetModal(
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Select Category",
-                    color = Slate300,
+                    color = textSecondaryColor(),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(bottom = 8.dp)
@@ -207,10 +207,10 @@ fun SetBudgetModal(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) cat.color.copy(alpha = 0.25f) else Slate900)
+                                .background(if (isSelected) cat.color.copy(alpha = 0.25f) else glassSurfaceBgColor())
                                 .border(
                                     width = 1.dp,
-                                    color = if (isSelected) cat.color else Slate800,
+                                    color = if (isSelected) cat.color else glassBorderColor(),
                                     shape = RoundedCornerShape(10.dp)
                                 )
                                 .clickable { categoryName = cat.name }
@@ -220,13 +220,13 @@ fun SetBudgetModal(
                             Icon(
                                 imageVector = cat.icon,
                                 contentDescription = cat.name,
-                                tint = if (isSelected) cat.color else Slate400,
+                                tint = if (isSelected) cat.color else textMutedColor(),
                                 modifier = Modifier.size(14.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = cat.name,
-                                color = if (isSelected) Slate50 else Slate300,
+                                color = if (isSelected) textPrimaryColor() else textSecondaryColor(),
                                 fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
@@ -245,7 +245,7 @@ fun SetBudgetModal(
                         limitAmountStr = it
                     }
                 },
-                label = { Text("Limit Cap Amount", color = Slate400) },
+                label = { Text("Limit Cap Amount", color = textMutedColor()) },
                 leadingIcon = {
                     Text(
                         text = currencySymbol,
@@ -255,17 +255,10 @@ fun SetBudgetModal(
                         modifier = Modifier.padding(start = 12.dp)
                     )
                 },
-                placeholder = { Text("e.g., 500.00", color = Slate600) },
+                placeholder = { Text("e.g., 500.00", color = textMutedColor().copy(alpha = 0.7f)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -290,7 +283,7 @@ fun SetBudgetModal(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Notify when spend reaches:",
-                        color = Slate300,
+                        color = textSecondaryColor(),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -309,10 +302,10 @@ fun SetBudgetModal(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSelected) AccentCyan.copy(alpha = 0.25f) else Slate900)
+                            .background(if (isSelected) AccentCyan.copy(alpha = 0.25f) else glassSurfaceBgColor())
                             .border(
                                 1.dp,
-                                if (isSelected) AccentCyan else Slate800,
+                                if (isSelected) AccentCyan else glassBorderColor(),
                                 RoundedCornerShape(8.dp)
                             )
                             .clickable { notifyThreshold = pct }
@@ -321,7 +314,7 @@ fun SetBudgetModal(
                     ) {
                         Text(
                             text = "$pct%",
-                            color = if (isSelected) AccentCyan else Slate400,
+                            color = if (isSelected) AccentCyan else textMutedColor(),
                             fontSize = 12.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )
@@ -336,8 +329,8 @@ fun SetBudgetModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Slate900)
-                    .border(1.dp, Slate800, RoundedCornerShape(12.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(12.dp))
                     .padding(horizontal = 14.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -345,13 +338,13 @@ fun SetBudgetModal(
                 Column {
                     Text(
                         text = "Enable Limit Monitoring",
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = "Send push alerts when exceeding limit",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 11.sp
                     )
                 }
@@ -362,8 +355,8 @@ fun SetBudgetModal(
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
                         checkedTrackColor = AccentCyan,
-                        uncheckedThumbColor = Slate400,
-                        uncheckedTrackColor = Slate800
+                        uncheckedThumbColor = textMutedColor(),
+                        uncheckedTrackColor = if (isAppInDarkTheme()) Slate800 else Color(0xFFE2E8F0)
                     )
                 )
             }

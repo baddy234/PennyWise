@@ -1,5 +1,6 @@
 package com.example.ui.modals
 
+import com.example.ui.theme.*
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -141,7 +142,7 @@ fun AutoBudgetPlannerModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Slate900,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.6f),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
@@ -176,14 +177,14 @@ fun AutoBudgetPlannerModal(
                     Column {
                         Text(
                             text = "SMART PLANNER",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.ExtraBold,
                             letterSpacing = 1.2.sp
                         )
                         Text(
                             text = "Auto-Plan Budget",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -194,13 +195,13 @@ fun AutoBudgetPlannerModal(
                     onClick = onDismiss,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(GlassSurfaceDark)
-                        .border(1.dp, GlassBorderDark, CircleShape)
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Slate300
+                        tint = textSecondaryColor()
                     )
                 }
             }
@@ -217,7 +218,7 @@ fun AutoBudgetPlannerModal(
                     ) {
                         Text(
                             text = "1. Enter Monthly Budget Target",
-                            color = Slate100,
+                            color = textPrimaryColor(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -248,17 +249,10 @@ fun AutoBudgetPlannerModal(
                             isPlanned = false
                         },
                         prefix = { Text("$currencySymbol ", color = AccentCyan, fontWeight = FontWeight.Bold) },
-                        placeholder = { Text("0.00", color = Slate400) },
+                        placeholder = { Text("0.00", color = textMutedColor()) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Slate800,
-                            unfocusedContainerColor = Slate800,
-                            focusedBorderColor = AccentCyan,
-                            unfocusedBorderColor = GlassBorderDark,
-                            focusedTextColor = Slate50,
-                            unfocusedTextColor = Slate50
-                        ),
+                        colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("auto_budget_input")
@@ -273,14 +267,14 @@ fun AutoBudgetPlannerModal(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "2. Select Expense Categories to Fund",
-                        color = Slate100,
+                        color = textPrimaryColor(),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "The algorithm prioritizes essentials like housing & food",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 11.sp
                     )
 
@@ -297,11 +291,11 @@ fun AutoBudgetPlannerModal(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(
-                                        if (isSelected) AccentCyan.copy(alpha = 0.2f) else Slate800
+                                        if (isSelected) AccentCyan.copy(alpha = 0.2f) else glassSurfaceBgColor()
                                     )
                                     .border(
                                         1.dp,
-                                        if (isSelected) AccentCyan else GlassBorderDark,
+                                        if (isSelected) AccentCyan else glassBorderColor(),
                                         RoundedCornerShape(10.dp)
                                     )
                                     .clickable {
@@ -326,7 +320,7 @@ fun AutoBudgetPlannerModal(
                                     }
                                     Text(
                                         text = category.name,
-                                        color = if (isSelected) Slate50 else Slate400,
+                                        color = if (isSelected) textPrimaryColor() else textMutedColor(),
                                         fontSize = 12.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
@@ -348,13 +342,13 @@ fun AutoBudgetPlannerModal(
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = null,
-                            tint = Slate900,
+                            tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Generate Smart Allocation Plan",
-                            color = Slate900,
+                            color = Color.White,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -383,13 +377,13 @@ fun AutoBudgetPlannerModal(
                                 Column {
                                     Text(
                                         text = "3. Recommended Category Caps",
-                                        color = Slate100,
+                                        color = textPrimaryColor(),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
                                         text = "Adjust sliders to tweak allocations",
-                                        color = Slate400,
+                                        color = textMutedColor(),
                                         fontSize = 11.sp
                                     )
                                 }
@@ -410,7 +404,7 @@ fun AutoBudgetPlannerModal(
                                     ) {
                                         Text(
                                             text = categoryName,
-                                            color = Slate100,
+                                            color = textPrimaryColor(),
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -431,7 +425,7 @@ fun AutoBudgetPlannerModal(
                                         colors = SliderDefaults.colors(
                                             thumbColor = AccentCyan,
                                             activeTrackColor = AccentCyan,
-                                            inactiveTrackColor = Slate800
+                                            inactiveTrackColor = if (isAppInDarkTheme()) Slate800 else Color(0xFFE2E8F0)
                                         )
                                     )
                                 }
@@ -457,13 +451,13 @@ fun AutoBudgetPlannerModal(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = Slate900,
+                            tint = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Apply & Save Planned Budget",
-                            color = Slate900,
+                            color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.ExtraBold
                         )

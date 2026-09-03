@@ -105,7 +105,7 @@ fun ExportCsvModal(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.75f),
         dragHandle = {
             Box(
@@ -114,7 +114,7 @@ fun ExportCsvModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(CircleShape)
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -150,13 +150,13 @@ fun ExportCsvModal(
                     Column {
                         Text(
                             text = "Export Local CSV Backup",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Save financial history to local storage",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 12.sp
                         )
                     }
@@ -169,7 +169,7 @@ fun ExportCsvModal(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Slate400,
+                        tint = textMutedColor(),
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -189,12 +189,12 @@ fun ExportCsvModal(
                     Column {
                         Text(
                             text = "Selected Records",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 11.sp
                         )
                         Text(
                             text = "${filteredTransactions.size} transactions",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -203,7 +203,7 @@ fun ExportCsvModal(
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "Total Value",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 11.sp
                         )
                         Text(
@@ -221,7 +221,7 @@ fun ExportCsvModal(
             // Timeframe Filter
             Text(
                 text = "Time Period Filter",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -231,7 +231,7 @@ fun ExportCsvModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Slate900)
+                    .background(glassSurfaceBgColor())
                     .padding(3.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -260,7 +260,7 @@ fun ExportCsvModal(
                     ) {
                         Text(
                             text = label,
-                            color = if (isSelected) Color.White else Slate400,
+                            color = if (isSelected) Color.White else textMutedColor(),
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )
@@ -273,7 +273,7 @@ fun ExportCsvModal(
             // Type Filter
             Text(
                 text = "Transaction Type",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -293,15 +293,15 @@ fun ExportCsvModal(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(if (isSelected) AccentIndigo.copy(alpha = 0.3f) else Slate900)
-                            .border(1.dp, if (isSelected) AccentIndigo else Slate800, RoundedCornerShape(8.dp))
+                            .background(if (isSelected) AccentIndigo.copy(alpha = 0.3f) else glassSurfaceBgColor())
+                            .border(1.dp, if (isSelected) AccentIndigo else glassBorderColor(), RoundedCornerShape(8.dp))
                             .clickable { selectedType = typeKey }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = label,
-                            color = if (isSelected) Color.White else Slate400,
+                            color = if (isSelected) Color.White else textMutedColor(),
                             fontSize = 12.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                         )

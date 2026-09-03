@@ -79,7 +79,7 @@ fun SmartInsightsModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -88,7 +88,7 @@ fun SmartInsightsModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -125,14 +125,14 @@ fun SmartInsightsModal(
                     Column {
                         Text(
                             text = "Smart Financial Insights",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.4).sp
                         )
                         Text(
                             text = "Automated budget pacing & spending analysis",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 12.sp
                         )
                     }
@@ -154,11 +154,11 @@ fun SmartInsightsModal(
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
                             .background(
-                                if (isOverPacing) Color(0x35881337) else Slate900
+                                if (isOverPacing) Color(0x35881337) else glassSurfaceBgColor()
                             )
                             .border(
                                 1.dp,
-                                if (isOverPacing) AccentRose.copy(alpha = 0.6f) else Slate800,
+                                if (isOverPacing) AccentRose.copy(alpha = 0.6f) else glassBorderColor(),
                                 RoundedCornerShape(16.dp)
                             )
                             .padding(16.dp)
@@ -185,7 +185,7 @@ fun SmartInsightsModal(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = if (isOverPacing) "Fast Budget Pacing Alert" else "Healthy Budget Pacing",
-                                    color = Slate50,
+                                    color = textPrimaryColor(),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -196,7 +196,7 @@ fun SmartInsightsModal(
                                     } else {
                                         "Your spending rate is pacing well within limits for day $dayOfMonth of the month."
                                     },
-                                    color = Slate300,
+                                    color = textSecondaryColor(),
                                     fontSize = 12.sp,
                                     lineHeight = 16.sp
                                 )
@@ -212,8 +212,8 @@ fun SmartInsightsModal(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(Slate900)
-                                .border(1.dp, Slate800, RoundedCornerShape(16.dp))
+                                .background(glassSurfaceBgColor())
+                                .border(1.dp, glassBorderColor(), RoundedCornerShape(16.dp))
                                 .padding(16.dp)
                         ) {
                             Row(
@@ -238,14 +238,14 @@ fun SmartInsightsModal(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = "Highest Spend: ${topCatMeta.name}",
-                                        color = Slate50,
+                                        color = textPrimaryColor(),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = "${topCatMeta.name} accounts for $currencySymbol${String.format(Locale.US, "%,.2f", topCatTotal)} of your total expenses.",
-                                        color = Slate300,
+                                        color = textSecondaryColor(),
                                         fontSize = 12.sp,
                                         lineHeight = 16.sp
                                     )
@@ -261,8 +261,8 @@ fun SmartInsightsModal(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Slate900)
-                            .border(1.dp, Slate800, RoundedCornerShape(16.dp))
+                            .background(glassSurfaceBgColor())
+                            .border(1.dp, glassBorderColor(), RoundedCornerShape(16.dp))
                             .padding(16.dp)
                     ) {
                         Row(
@@ -287,7 +287,7 @@ fun SmartInsightsModal(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = "Estimated Savings Rate: ${savingsRatio.toInt()}%",
-                                    color = Slate50,
+                                    color = textPrimaryColor(),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -298,7 +298,7 @@ fun SmartInsightsModal(
                                     } else {
                                         "Aim to save at least 20% of income by trimming non-essential recurring costs."
                                     },
-                                    color = Slate300,
+                                    color = textSecondaryColor(),
                                     fontSize = 12.sp,
                                     lineHeight = 16.sp
                                 )

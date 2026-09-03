@@ -67,7 +67,7 @@ fun SecuritySettingsModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -76,7 +76,7 @@ fun SecuritySettingsModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -112,14 +112,14 @@ fun SecuritySettingsModal(
                 Column {
                     Text(
                         text = "App Lock & Security",
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-0.4).sp
                     )
                     Text(
                         text = "Require 4-digit PIN on app startup",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 12.sp
                     )
                 }
@@ -132,8 +132,8 @@ fun SecuritySettingsModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Slate900)
-                    .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                     .padding(16.dp)
             ) {
                 Row(
@@ -144,13 +144,13 @@ fun SecuritySettingsModal(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Enable PIN Passcode Lock",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             text = "Protects financial entries & balances from unauthorized access.",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 12.sp
                         )
                     }
@@ -161,8 +161,8 @@ fun SecuritySettingsModal(
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = AccentCyan,
-                            uncheckedThumbColor = Slate400,
-                            uncheckedTrackColor = Slate800
+                            uncheckedThumbColor = if (isAppInDarkTheme()) Slate400 else Color(0xFF94A3B8),
+                            uncheckedTrackColor = if (isAppInDarkTheme()) Slate800 else Color(0xFFE2E8F0)
                         )
                     )
                 }
@@ -173,7 +173,7 @@ fun SecuritySettingsModal(
 
                 Text(
                     text = "SET 4-DIGIT PIN",
-                    color = Slate400,
+                    color = textMutedColor(),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
@@ -188,18 +188,11 @@ fun SecuritySettingsModal(
                             errorMessage = null
                         }
                     },
-                    label = { Text("Enter 4-Digit PIN", color = Slate400) },
+                    label = { Text("Enter 4-Digit PIN", color = textMutedColor()) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     visualTransformation = PasswordVisualTransformation(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Slate50,
-                        unfocusedTextColor = Slate200,
-                        focusedBorderColor = AccentCyan,
-                        unfocusedBorderColor = Slate700,
-                        focusedContainerColor = Slate900,
-                        unfocusedContainerColor = Slate900
-                    ),
+                    colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -216,18 +209,11 @@ fun SecuritySettingsModal(
                             errorMessage = null
                         }
                     },
-                    label = { Text("Confirm 4-Digit PIN", color = Slate400) },
+                    label = { Text("Confirm 4-Digit PIN", color = textMutedColor()) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     visualTransformation = PasswordVisualTransformation(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Slate50,
-                        unfocusedTextColor = Slate200,
-                        focusedBorderColor = AccentCyan,
-                        unfocusedBorderColor = Slate700,
-                        focusedContainerColor = Slate900,
-                        unfocusedContainerColor = Slate900
-                    ),
+                    colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                     shape = RoundedCornerShape(14.dp),
                     modifier = Modifier
                         .fillMaxWidth()

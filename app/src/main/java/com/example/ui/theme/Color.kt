@@ -2,7 +2,7 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Frosted Glass deep obsidian space canvas
+// Frosted Glass deep obsidian space canvas & primitives
 val DarkBackground = Color(0xFF030712)
 val DarkSurface = Color(0xFF0D1322)
 val DarkSurfaceVariant = Color(0xFF161F33)

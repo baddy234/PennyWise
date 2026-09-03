@@ -80,7 +80,7 @@ fun CategoryBreakdownModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -89,7 +89,7 @@ fun CategoryBreakdownModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -126,14 +126,14 @@ fun CategoryBreakdownModal(
                     Column {
                         Text(
                             text = "Category Analytics",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.4).sp
                         )
                         Text(
                             text = "Expense distribution by category",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 12.sp
                         )
                     }
@@ -152,15 +152,8 @@ fun CategoryBreakdownModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                Slate900,
-                                Slate950
-                            )
-                        )
-                    )
-                    .border(1.dp, Slate800, RoundedCornerShape(16.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(16.dp))
                     .padding(16.dp)
             ) {
                 Row(
@@ -171,7 +164,7 @@ fun CategoryBreakdownModal(
                     Column {
                         Text(
                             text = "TOTAL ANALYZED EXPENSE",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp
@@ -179,7 +172,7 @@ fun CategoryBreakdownModal(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "$currencySymbol${String.format(Locale.US, "%,.2f", totalExpenseAmount)}",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.ExtraBold
                         )
@@ -187,7 +180,7 @@ fun CategoryBreakdownModal(
 
                     Text(
                         text = "${expensesOnly.size} Expenses",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -202,13 +195,13 @@ fun CategoryBreakdownModal(
                         .fillMaxWidth()
                         .height(160.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Slate900)
-                        .border(1.dp, Slate800, RoundedCornerShape(14.dp)),
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "No expense data for this period",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 13.sp
                     )
                 }
@@ -227,8 +220,8 @@ fun CategoryBreakdownModal(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Slate900)
-                                .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                                .background(glassSurfaceBgColor())
+                                .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                                 .padding(14.dp)
                         ) {
                             Row(
@@ -255,13 +248,13 @@ fun CategoryBreakdownModal(
                                     Column {
                                         Text(
                                             text = item.categoryName,
-                                            color = Slate100,
+                                            color = textPrimaryColor(),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
                                         Text(
                                             text = "${item.count} transactions • ${(item.percentage * 100).toInt()}%",
-                                            color = Slate400,
+                                            color = textMutedColor(),
                                             fontSize = 11.sp
                                         )
                                     }
@@ -269,7 +262,7 @@ fun CategoryBreakdownModal(
 
                                 Text(
                                     text = "$currencySymbol${String.format(Locale.US, "%,.2f", item.totalAmount)}",
-                                    color = Slate50,
+                                    color = textPrimaryColor(),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -283,7 +276,7 @@ fun CategoryBreakdownModal(
                                     .fillMaxWidth()
                                     .height(5.dp)
                                     .clip(RoundedCornerShape(3.dp))
-                                    .background(Slate800)
+                                    .background(if (isAppInDarkTheme()) Slate800 else Color(0xFFE2E8F0))
                             ) {
                                 Box(
                                     modifier = Modifier

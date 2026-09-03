@@ -74,7 +74,7 @@ fun SubscriptionsModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DarkSurface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.7f),
         dragHandle = {
             Box(
@@ -83,7 +83,7 @@ fun SubscriptionsModal(
                     .width(40.dp)
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Slate700)
+                    .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
             )
         }
     ) {
@@ -120,14 +120,14 @@ fun SubscriptionsModal(
                     Column {
                         Text(
                             text = "Subscriptions & Recurring",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = (-0.4).sp
                         )
                         Text(
                             text = "Fixed bills, memberships & automated charges",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 12.sp
                         )
                     }
@@ -161,7 +161,7 @@ fun SubscriptionsModal(
                     Column {
                         Text(
                             text = "ESTIMATED MONTHLY FIXED COST",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp
@@ -169,7 +169,7 @@ fun SubscriptionsModal(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "$currencySymbol${String.format(Locale.US, "%,.2f", totalMonthlyFixedCost)}",
-                            color = Slate50,
+                            color = textPrimaryColor(),
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -191,7 +191,7 @@ fun SubscriptionsModal(
             ) {
                 Text(
                     text = "ACTIVE RECURRING BILLS",
-                    color = Slate400,
+                    color = textMutedColor(),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
@@ -220,27 +220,27 @@ fun SubscriptionsModal(
                         .fillMaxWidth()
                         .height(140.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Slate900)
-                        .border(1.dp, Slate800, RoundedCornerShape(14.dp)),
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = null,
-                            tint = Slate600,
+                            tint = textMutedColor(),
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "No active recurring bills yet",
-                            color = Slate400,
+                            color = textMutedColor(),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
                             text = "Mark expenses as recurring when recording transactions",
-                            color = Slate600,
+                            color = textMutedColor().copy(alpha = 0.7f),
                             fontSize = 11.sp
                         )
                     }
@@ -261,8 +261,8 @@ fun SubscriptionsModal(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(Slate900)
-                                .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                                .background(glassSurfaceBgColor())
+                                .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                                 .padding(12.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -286,7 +286,7 @@ fun SubscriptionsModal(
                                 Column {
                                     Text(
                                         text = item.title,
-                                        color = Slate100,
+                                        color = textPrimaryColor(),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -299,7 +299,7 @@ fun SubscriptionsModal(
                                         )
                                         Text(
                                             text = item.fundName ?: "Main Balance",
-                                            color = Slate400,
+                                            color = textMutedColor(),
                                             fontSize = 11.sp
                                         )
                                     }
@@ -309,7 +309,7 @@ fun SubscriptionsModal(
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
                                     text = "$currencySymbol${String.format(Locale.US, "%.2f", item.amount)}",
-                                    color = Slate50,
+                                    color = textPrimaryColor(),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
                                 )

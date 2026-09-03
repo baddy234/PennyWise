@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
 import com.example.data.local.entity.BudgetLimitEntity
+import com.example.data.local.entity.DebtEntity
 import com.example.data.local.entity.ExpenseTemplateEntity
 import com.example.data.local.entity.FundEntity
 import com.example.data.local.entity.TransactionEntity
@@ -14,6 +15,7 @@ import com.example.data.repository.BudgetRepository
 import com.example.notification.NotificationHelper
 import com.example.ui.components.BarChartItem
 import com.example.ui.components.CategorySpendItem
+import com.example.ui.components.MonthlyTrendVsLimitItem
 import com.example.util.BackupExportHelper
 import com.example.ui.theme.AppThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,7 +91,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
 
     private val db = AppDatabase.getDatabase(application, viewModelScope)
     private val notificationHelper = NotificationHelper(application)
-    private val repository = BudgetRepository(db.transactionDao(), db.budgetLimitDao(), db.fundDao(), db.expenseTemplateDao(), notificationHelper)
+    private val repository = BudgetRepository(db.transactionDao(), db.budgetLimitDao(), db.fundDao(), db.expenseTemplateDao(), db.debtDao(), notificationHelper)
 
     val transactions: StateFlow<List<TransactionEntity>> = repository.allTransactions
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -103,12 +105,18 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
     val expenseTemplates: StateFlow<List<ExpenseTemplateEntity>> = repository.allTemplates
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val debts: StateFlow<List<DebtEntity>> = repository.allDebts
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
-        // Seed initial default expense templates if empty
+        // Seed initial default expense templates and debts if empty
         viewModelScope.launch {
             kotlinx.coroutines.delay(1000)
             if (expenseTemplates.value.isEmpty()) {
                 seedInitialTemplates()
+            }
+            if (debts.value.isEmpty()) {
+                seedInitialDebts()
             }
         }
     }
@@ -172,6 +180,43 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             )
         )
         defaultTemplates.forEach { repository.insertTemplate(it) }
+    }
+
+    private suspend fun seedInitialDebts() {
+        val now = System.currentTimeMillis()
+        val defaultDebts = listOf(
+            DebtEntity(
+                personName = "Sarah Connor",
+                type = "OWED_TO_YOU",
+                totalAmount = 85.00,
+                amountPaid = 25.00,
+                dueDateMillis = now + (5 * 24 * 60 * 60 * 1000L), // due in 5 days
+                notes = "Dinner & concert ticket split",
+                contactPhone = "+1 555-0192",
+                isSettled = false
+            ),
+            DebtEntity(
+                personName = "Alex Rivera",
+                type = "OWED_TO_YOU",
+                totalAmount = 150.00,
+                amountPaid = 0.0,
+                dueDateMillis = now + (12 * 24 * 60 * 60 * 1000L),
+                notes = "Lent cash for weekend roadtrip",
+                contactPhone = "+1 555-0144",
+                isSettled = false
+            ),
+            DebtEntity(
+                personName = "Tech Store (Laptop)",
+                type = "YOU_OWE",
+                totalAmount = 400.00,
+                amountPaid = 200.00,
+                dueDateMillis = now + (20 * 24 * 60 * 60 * 1000L),
+                notes = "Remaining balance on device loan",
+                contactPhone = "",
+                isSettled = false
+            )
+        )
+        defaultDebts.forEach { repository.insertDebt(it) }
     }
 
     val budgetForecast: StateFlow<BudgetForecast> = combine(
@@ -440,6 +485,83 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             )
             repository.insertTransaction(tx)
             _statusMessage.value = "⚡ Recorded ${template.title} (${_currencySymbol.value}${String.format(Locale.US, "%.2f", template.amount)})"
+        }
+    }
+
+    // Debts & Debtors Actions
+    fun createDebt(
+        personName: String,
+        type: String,
+        totalAmount: Double,
+        amountPaid: Double = 0.0,
+        dueDateMillis: Long? = null,
+        notes: String = "",
+        contactPhone: String = ""
+    ) {
+        viewModelScope.launch {
+            val debt = DebtEntity(
+                personName = personName,
+                type = type,
+                totalAmount = totalAmount,
+                amountPaid = amountPaid.coerceIn(0.0, totalAmount),
+                dueDateMillis = dueDateMillis,
+                notes = notes,
+                contactPhone = contactPhone,
+                isSettled = amountPaid >= totalAmount
+            )
+            repository.insertDebt(debt)
+            val typeLabel = if (type == "OWED_TO_YOU") "debtor" else "debt"
+            _statusMessage.value = "Added $typeLabel for $personName"
+        }
+    }
+
+    fun updateDebt(debt: DebtEntity) {
+        viewModelScope.launch {
+            val autoSettled = debt.amountPaid >= debt.totalAmount
+            val updated = debt.copy(isSettled = autoSettled || debt.isSettled)
+            repository.updateDebt(updated)
+            _statusMessage.value = "Debt record updated"
+        }
+    }
+
+    fun deleteDebt(debt: DebtEntity) {
+        viewModelScope.launch {
+            repository.deleteDebt(debt)
+            _statusMessage.value = "Debt record removed"
+        }
+    }
+
+    fun recordDebtPayment(debt: DebtEntity, paymentAmount: Double, recordAsTransaction: Boolean = true) {
+        viewModelScope.launch {
+            val newAmountPaid = (debt.amountPaid + paymentAmount).coerceAtMost(debt.totalAmount)
+            val isNowSettled = newAmountPaid >= debt.totalAmount
+            val updated = debt.copy(amountPaid = newAmountPaid, isSettled = isNowSettled)
+            repository.updateDebt(updated)
+
+            if (recordAsTransaction) {
+                val isIncome = debt.type == "OWED_TO_YOU"
+                val tx = TransactionEntity(
+                    title = if (isIncome) "Repayment from ${debt.personName}" else "Debt payment to ${debt.personName}",
+                    amount = paymentAmount,
+                    category = if (isIncome) "Salary & Income" else "Utilities",
+                    type = if (isIncome) "INCOME" else "EXPENSE",
+                    note = "Recorded payment for debt: ${debt.notes.ifBlank { debt.personName }}",
+                    paymentMethod = "Bank Transfer"
+                )
+                repository.insertTransaction(tx)
+            }
+
+            _statusMessage.value = "Recorded ${_currencySymbol.value}${String.format(Locale.US, "%.2f", paymentAmount)} payment for ${debt.personName}"
+        }
+    }
+
+    fun toggleDebtSettled(debt: DebtEntity) {
+        viewModelScope.launch {
+            val newSettled = !debt.isSettled
+            val newPaid = if (newSettled) debt.totalAmount else debt.amountPaid
+            val updated = debt.copy(isSettled = newSettled, amountPaid = newPaid)
+            repository.updateDebt(updated)
+            _statusMessage.value = if (newSettled) "${debt.personName} debt marked settled!" else "Reopened debt for ${debt.personName}"
         }
     }
 
@@ -800,7 +922,98 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             return insights
         }
 
-        // 1. Top Spending Category Insight
+        // 1. Month-over-Month (MoM) Category Comparison Insight
+        val nowCal = Calendar.getInstance()
+        val curMonthStart = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val prevMonthStart = Calendar.getInstance().apply {
+            add(Calendar.MONTH, -1)
+            set(Calendar.DAY_OF_MONTH, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val curMonthExpenses = all.filter { it.type == "EXPENSE" && it.dateMillis >= curMonthStart }
+        val prevMonthExpenses = all.filter { it.type == "EXPENSE" && it.dateMillis in prevMonthStart until curMonthStart }
+
+        val curCatMap = curMonthExpenses.groupBy { it.category }.mapValues { it.value.sumOf { tx -> tx.amount } }
+        val prevCatMap = prevMonthExpenses.groupBy { it.category }.mapValues { it.value.sumOf { tx -> tx.amount } }
+
+        // Find category with biggest MoM percentage increase or notable change
+        var momInsightAdded = false
+        val allCatKeys = (curCatMap.keys + prevCatMap.keys).distinct()
+        for (catId in allCatKeys) {
+            val curAmt = curCatMap[catId] ?: 0.0
+            val prevAmt = prevCatMap[catId] ?: 0.0
+            val catMeta = com.example.data.model.CategoryRegistry.getCategory(catId)
+
+            if (prevAmt > 0 && curAmt > 0) {
+                val pctChange = (((curAmt - prevAmt) / prevAmt) * 100).toInt()
+                if (pctChange >= 15) {
+                    insights.add(
+                        SpendingInsight(
+                            title = "Month-over-Month Increase: ${catMeta.name}",
+                            description = "You spent $pctChange% more on ${catMeta.name.lowercase()} this month compared to last month (${_currencySymbol.value}${String.format(Locale.US, "%.2f", curAmt)} vs ${_currencySymbol.value}${String.format(Locale.US, "%.2f", prevAmt)}).",
+                            type = if (pctChange > 30) InsightType.WARNING else InsightType.INFO,
+                            iconCategory = catId
+                        )
+                    )
+                    momInsightAdded = true
+                    break
+                } else if (pctChange <= -15) {
+                    insights.add(
+                        SpendingInsight(
+                            title = "Smart Savings: ${catMeta.name}",
+                            description = "Great job! You spent ${kotlin.math.abs(pctChange)}% less on ${catMeta.name.lowercase()} this month compared to last month (${_currencySymbol.value}${String.format(Locale.US, "%.2f", curAmt)} vs ${_currencySymbol.value}${String.format(Locale.US, "%.2f", prevAmt)}).",
+                            type = InsightType.POSITIVE,
+                            iconCategory = catId
+                        )
+                    )
+                    momInsightAdded = true
+                    break
+                }
+            }
+        }
+
+        // 2. Year-to-Date (YTD) Macro Insight
+        val ytdStart = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val ytdExpenses = all.filter { it.type == "EXPENSE" && it.dateMillis >= ytdStart }
+        val ytdTotal = ytdExpenses.sumOf { it.amount }
+        if (ytdTotal > 0) {
+            val ytdTopCatGroup = ytdExpenses.groupBy { it.category }
+                .mapValues { it.value.sumOf { tx -> tx.amount } }
+                .maxByOrNull { it.value }
+
+            if (ytdTopCatGroup != null) {
+                val catMeta = com.example.data.model.CategoryRegistry.getCategory(ytdTopCatGroup.key)
+                val ytdPct = ((ytdTopCatGroup.value / ytdTotal) * 100).toInt()
+                insights.add(
+                    SpendingInsight(
+                        title = "Biggest Expense Category This Year",
+                        description = "Your biggest expense category this year is ${catMeta.name} (${_currencySymbol.value}${String.format(Locale.US, "%,.2f", ytdTopCatGroup.value)}, $ytdPct% of total YTD spending).",
+                        type = InsightType.INFO,
+                        iconCategory = ytdTopCatGroup.key
+                    )
+                )
+            }
+        }
+
+        // 3. Top Spending Category in Selected Timeframe
         val catGroups = expenses.groupBy { it.category }
             .mapValues { it.value.sumOf { tx -> tx.amount } }
             .toList()
@@ -808,25 +1021,68 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
 
         val topCat = catGroups.firstOrNull()
         if (topCat != null && totalExpense > 0) {
+            val catMeta = com.example.data.model.CategoryRegistry.getCategory(topCat.first)
             val pct = ((topCat.second / totalExpense) * 100).toInt()
             insights.add(
                 SpendingInsight(
-                    title = "Highest Spend: ${topCat.first}",
-                    description = "${topCat.first} accounts for $pct% (${_currencySymbol.value}${String.format("%.2f", topCat.second)}) of all spending in this period.",
-                    type = if (pct > 50) InsightType.WARNING else InsightType.INFO,
+                    title = "Period Leader: ${catMeta.name}",
+                    description = "${catMeta.name} accounts for $pct% (${_currencySymbol.value}${String.format(Locale.US, "%.2f", topCat.second)}) of all spending in this timeframe.",
+                    type = if (pct > 40) InsightType.WARNING else InsightType.INFO,
                     iconCategory = topCat.first
+                )
+            )
+
+            // AI Actionable Optimization Tip
+            if (pct > 20) {
+                val potentialSaving = topCat.second * 0.10
+                insights.add(
+                    SpendingInsight(
+                        title = "AI Optimization Suggestion",
+                        description = "Reducing spending on ${catMeta.name} by 10% could save you ${_currencySymbol.value}${String.format(Locale.US, "%.2f", potentialSaving)} per period towards your savings goals.",
+                        type = InsightType.POSITIVE,
+                        iconCategory = topCat.first
+                    )
+                )
+            }
+        }
+
+        // 4. Peak Day Spending Habit
+        val dayOfWeekFormat = java.text.SimpleDateFormat("EEEE", Locale.US)
+        val dayGroups = expenses.groupBy {
+            val c = Calendar.getInstance().apply { timeInMillis = it.dateMillis }
+            c.get(Calendar.DAY_OF_WEEK)
+        }.mapValues { it.value.sumOf { tx -> tx.amount } }
+
+        val peakDayEntry = dayGroups.maxByOrNull { it.value }
+        if (peakDayEntry != null && totalExpense > 50) {
+            val dayName = when (peakDayEntry.key) {
+                Calendar.SUNDAY -> "Sundays"
+                Calendar.MONDAY -> "Mondays"
+                Calendar.TUESDAY -> "Tuesdays"
+                Calendar.WEDNESDAY -> "Wednesdays"
+                Calendar.THURSDAY -> "Thursdays"
+                Calendar.FRIDAY -> "Fridays"
+                Calendar.SATURDAY -> "Saturdays"
+                else -> "Weekends"
+            }
+            val peakPct = ((peakDayEntry.value / totalExpense) * 100).toInt()
+            insights.add(
+                SpendingInsight(
+                    title = "Peak Spending Day: $dayName",
+                    description = "$dayName are your highest spending day, making up $peakPct% (${_currencySymbol.value}${String.format(Locale.US, "%.2f", peakDayEntry.value)}) of total expenses.",
+                    type = InsightType.INFO
                 )
             )
         }
 
-        // 2. Limit Breach Check Insights
+        // 5. Limit Breach Check Insights
         val summary = getPeriodSummary(all, limits, timeframe)
         if (summary.isLimitExceeded) {
             val over = summary.totalExpense - summary.limitAmount
             insights.add(
                 SpendingInsight(
                     title = "Budget Limit Exceeded!",
-                    description = "You are ${_currencySymbol.value}${String.format("%.2f", over)} over your ${timeframe.name.lowercase().capitalize(Locale.ROOT)} budget ceiling of ${_currencySymbol.value}${String.format("%.2f", summary.limitAmount)}.",
+                    description = "You are ${_currencySymbol.value}${String.format(Locale.US, "%.2f", over)} over your ${timeframe.displayName.lowercase()} budget ceiling of ${_currencySymbol.value}${String.format(Locale.US, "%.2f", summary.limitAmount)}.",
                     type = InsightType.DANGER
                 )
             )
@@ -835,7 +1091,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             insights.add(
                 SpendingInsight(
                     title = "Approaching Limit ($pct%)",
-                    description = "You've used $pct% of your limit. Consider slowing down discretionary purchases.",
+                    description = "You've used $pct% of your budget limit. Consider slowing down discretionary purchases.",
                     type = InsightType.WARNING
                 )
             )
@@ -844,13 +1100,13 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             insights.add(
                 SpendingInsight(
                     title = "Healthy Financial Track",
-                    description = "You have saved ${_currencySymbol.value}${String.format("%.2f", saved)} within your limit so far.",
+                    description = "You have saved ${_currencySymbol.value}${String.format(Locale.US, "%.2f", saved)} within your limit so far.",
                     type = InsightType.POSITIVE
                 )
             )
         }
 
-        // 3. Savings Rate
+        // 6. Savings Rate
         if (totalIncome > 0) {
             val savingsRate = (((totalIncome - totalExpense) / totalIncome) * 100).toInt()
             if (savingsRate >= 20) {
@@ -865,7 +1121,7 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
                 insights.add(
                     SpendingInsight(
                         title = "Negative Cash Flow",
-                        description = "Expenses exceed income by ${_currencySymbol.value}${String.format("%.2f", totalExpense - totalIncome)} for this timeframe.",
+                        description = "Expenses exceed income by ${_currencySymbol.value}${String.format(Locale.US, "%.2f", totalExpense - totalIncome)} for this timeframe.",
                         type = InsightType.DANGER
                     )
                 )
@@ -953,5 +1209,59 @@ class BudgetViewModel(application: Application) : AndroidViewModel(application) 
             recommendedDailyAllowance = recommendedDailyAllowance,
             healthStatus = healthStatus
         )
+    }
+
+    fun getMonthlyTrendsVsLimits(
+        allTransactions: List<TransactionEntity>,
+        limits: List<BudgetLimitEntity>,
+        monthsCount: Int = 6
+    ): List<MonthlyTrendVsLimitItem> {
+        val expenses = allTransactions.filter { it.type == "EXPENSE" }
+        val monthlyLimitObj = limits.find { it.periodType == "MONTHLY" && it.isEnabled }
+
+        val explicitLimit = monthlyLimitObj?.limitAmount ?: 0.0
+        val categoryMonthlyTotal = limits.filter { it.periodType == "CATEGORY" && it.isEnabled }.sumOf { it.limitAmount }
+        val activeLimit = if (explicitLimit > 0) explicitLimit else if (categoryMonthlyTotal > 0) categoryMonthlyTotal else 1500.0
+
+        val monthFormat = SimpleDateFormat("MMM", Locale.getDefault())
+        val fullFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+
+        val result = mutableListOf<MonthlyTrendVsLimitItem>()
+        val nowCal = Calendar.getInstance()
+        val currentMonthIdx = nowCal.get(Calendar.MONTH)
+        val currentYearIdx = nowCal.get(Calendar.YEAR)
+
+        for (m in (monthsCount - 1) downTo 0) {
+            val c = Calendar.getInstance()
+            c.add(Calendar.MONTH, -m)
+            c.set(Calendar.DAY_OF_MONTH, 1)
+            c.set(Calendar.HOUR_OF_DAY, 0)
+            c.set(Calendar.MINUTE, 0)
+            c.set(Calendar.SECOND, 0)
+            c.set(Calendar.MILLISECOND, 0)
+            val startMs = c.timeInMillis
+
+            c.add(Calendar.MONTH, 1)
+            val endMs = c.timeInMillis
+
+            val monthSpend = expenses.filter { it.dateMillis in startMs until endMs }.sumOf { it.amount }
+
+            c.timeInMillis = startMs
+            val isCurrent = (c.get(Calendar.MONTH) == currentMonthIdx && c.get(Calendar.YEAR) == currentYearIdx)
+
+            val monthLabel = monthFormat.format(Date(startMs))
+            val fullMonthName = fullFormat.format(Date(startMs))
+
+            result.add(
+                MonthlyTrendVsLimitItem(
+                    monthLabel = monthLabel,
+                    fullMonthName = fullMonthName,
+                    actualSpending = monthSpend,
+                    setLimit = activeLimit,
+                    isCurrentMonth = isCurrent
+                )
+            )
+        }
+        return result
     }
 }

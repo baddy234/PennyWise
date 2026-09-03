@@ -1,5 +1,6 @@
 package com.example.ui.modals
 
+import com.example.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.ReceiptLong
@@ -72,7 +74,7 @@ fun MoreNavigationModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Slate900,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.6f),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
@@ -90,7 +92,7 @@ fun MoreNavigationModal(
                 Column {
                     Text(
                         text = "APP NAVIGATION",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.2.sp
@@ -98,7 +100,7 @@ fun MoreNavigationModal(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "More Options",
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -108,13 +110,13 @@ fun MoreNavigationModal(
                     onClick = onDismiss,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(GlassSurfaceDark)
-                        .border(1.dp, GlassBorderDark, CircleShape)
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close Menu",
-                        tint = Slate300
+                        tint = textSecondaryColor()
                     )
                 }
             }
@@ -124,7 +126,7 @@ fun MoreNavigationModal(
             // Section 1: Main Pages
             Text(
                 text = "PAGES & ANALYTICS",
-                color = Slate400,
+                color = textMutedColor(),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
@@ -133,6 +135,20 @@ fun MoreNavigationModal(
             Spacer(modifier = Modifier.height(10.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                MoreNavItem(
+                    title = "Debts & Debtors Tracker",
+                    subtitle = "Track money you owe and money owed to you",
+                    icon = Icons.Default.Handshake,
+                    accentColor = AccentRose,
+                    isSelected = currentTab == AppNavigationTab.DEBTS,
+                    badgeText = "Debts",
+                    onClick = {
+                        onSelectTab(AppNavigationTab.DEBTS)
+                        onDismiss()
+                    },
+                    testTag = "more_nav_debts"
+                )
+
                 MoreNavItem(
                     title = "Expense Templates & Plan",
                     subtitle = "Create presets, monthly plan, & quick log expenses",
@@ -195,7 +211,7 @@ fun MoreNavigationModal(
             // Section 2: Quick Tools & Data
             Text(
                 text = "DATA & UTILITIES",
-                color = Slate400,
+                color = textMutedColor(),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp
@@ -255,7 +271,7 @@ private fun MoreNavItem(
             .fillMaxWidth()
             .clickable { onClick() }
             .testTag(testTag),
-        borderGlowColor = if (isSelected) accentColor else GlassBorderDark
+        borderGlowColor = if (isSelected) accentColor else glassBorderColor()
     ) {
         Row(
             modifier = Modifier
@@ -286,7 +302,7 @@ private fun MoreNavItem(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = title,
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -298,7 +314,7 @@ private fun MoreNavItem(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    color = Slate400,
+                    color = textMutedColor(),
                     fontSize = 11.sp
                 )
             }
@@ -319,8 +335,8 @@ private fun QuickActionCard(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(GlassSurfaceDark)
-            .border(1.dp, GlassBorderDark, RoundedCornerShape(16.dp))
+            .background(glassSurfaceBgColor())
+            .border(1.dp, glassBorderColor(), RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .testTag(testTag)
             .padding(14.dp)
@@ -343,14 +359,14 @@ private fun QuickActionCard(
             Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = title,
-                color = Slate100,
+                color = textPrimaryColor(),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
-                color = Slate400,
+                color = textMutedColor(),
                 fontSize = 10.sp
             )
         }

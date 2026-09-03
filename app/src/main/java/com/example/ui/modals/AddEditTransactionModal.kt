@@ -108,7 +108,7 @@ fun AddEditTransactionModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.5f),
         dragHandle = {
             Box(
@@ -254,7 +254,7 @@ fun AddEditTransactionModal(
             // Category Dropdown Selector
             Text(
                 text = "Category",
-                color = MaterialTheme.colorScheme.onSurface,
+                color = textPrimaryColor(),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 6.dp)
@@ -268,8 +268,8 @@ fun AddEditTransactionModal(
                         .fillMaxWidth()
                         .height(50.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Slate900)
-                        .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                         .clickable { isCategoryDropdownExpanded = true }
                         .padding(horizontal = 14.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -293,7 +293,7 @@ fun AddEditTransactionModal(
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = currentCategoryObj.name,
-                            color = Slate100,
+                            color = textPrimaryColor(),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -302,7 +302,7 @@ fun AddEditTransactionModal(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = "Select Category",
-                        tint = Slate400
+                        tint = textMutedColor()
                     )
                 }
 
@@ -310,8 +310,8 @@ fun AddEditTransactionModal(
                     expanded = isCategoryDropdownExpanded,
                     onDismissRequest = { isCategoryDropdownExpanded = false },
                     modifier = Modifier
-                        .background(DarkSurface)
-                        .border(1.dp, Slate800, RoundedCornerShape(12.dp))
+                        .background(glassModalContainerColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(12.dp))
                 ) {
                     categories.forEach { cat ->
                         DropdownMenuItem(
@@ -326,7 +326,7 @@ fun AddEditTransactionModal(
                                     Spacer(modifier = Modifier.width(10.dp))
                                     Text(
                                         text = cat.name,
-                                        color = Slate100,
+                                        color = textPrimaryColor(),
                                         fontSize = 13.sp,
                                         fontWeight = if (selectedCategory.equals(cat.name, ignoreCase = true)) FontWeight.Bold else FontWeight.Normal
                                     )
@@ -347,7 +347,7 @@ fun AddEditTransactionModal(
             if (funds.isNotEmpty()) {
                 Text(
                     text = if (transactionType == "EXPENSE") "Deduct From Account / Fund" else "Credit To Account / Fund",
-                    color = Slate300,
+                    color = textSecondaryColor(),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(bottom = 6.dp)
@@ -359,8 +359,8 @@ fun AddEditTransactionModal(
                             .fillMaxWidth()
                             .height(50.dp)
                             .clip(RoundedCornerShape(14.dp))
-                            .background(Slate900)
-                            .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                            .background(glassSurfaceBgColor())
+                            .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                             .clickable { isFundDropdownExpanded = true }
                             .padding(horizontal = 14.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -371,13 +371,13 @@ fun AddEditTransactionModal(
                                 Icon(
                                     imageVector = Icons.Default.AccountBalanceWallet,
                                     contentDescription = null,
-                                    tint = Slate400,
+                                    tint = textMutedColor(),
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = "General Budget (No Specific Fund)",
-                                    color = Slate200,
+                                    color = textSecondaryColor(),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -401,13 +401,13 @@ fun AddEditTransactionModal(
                                 Column {
                                     Text(
                                         text = selectedFund.name,
-                                        color = Slate100,
+                                        color = textPrimaryColor(),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
                                         text = "Balance: $currencySymbol${String.format(Locale.US, "%.2f", selectedFund.balance)}",
-                                        color = Slate400,
+                                        color = textMutedColor(),
                                         fontSize = 11.sp
                                     )
                                 }
@@ -417,7 +417,7 @@ fun AddEditTransactionModal(
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = "Select Fund",
-                            tint = Slate400
+                            tint = textMutedColor()
                         )
                     }
 
@@ -425,15 +425,15 @@ fun AddEditTransactionModal(
                         expanded = isFundDropdownExpanded,
                         onDismissRequest = { isFundDropdownExpanded = false },
                         modifier = Modifier
-                            .background(DarkSurface)
-                            .border(1.dp, Slate800, RoundedCornerShape(12.dp))
+                            .background(glassModalContainerColor())
+                            .border(1.dp, glassBorderColor(), RoundedCornerShape(12.dp))
                     ) {
                         // Option for General Budget
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = "General Budget (None)",
-                                    color = if (selectedFundId == null) AccentCyan else Slate200,
+                                    color = if (selectedFundId == null) AccentCyan else textSecondaryColor(),
                                     fontSize = 13.sp,
                                     fontWeight = if (selectedFundId == null) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -458,7 +458,7 @@ fun AddEditTransactionModal(
                                         Spacer(modifier = Modifier.width(10.dp))
                                         Text(
                                             text = "${fund.name} ($currencySymbol${String.format(Locale.US, "%.0f", fund.balance)})",
-                                            color = if (selectedFundId == fund.id) AccentCyan else Slate100,
+                                            color = if (selectedFundId == fund.id) AccentCyan else textPrimaryColor(),
                                             fontSize = 13.sp,
                                             fontWeight = if (selectedFundId == fund.id) FontWeight.Bold else FontWeight.Normal
                                         )
@@ -489,12 +489,12 @@ fun AddEditTransactionModal(
                             .clip(RoundedCornerShape(8.dp))
                             .background(
                                 if (transactionType == "EXPENSE" && projectedBal < 0) AccentRose.copy(alpha = 0.15f)
-                                else Slate900.copy(alpha = 0.8f)
+                                else if (isDark) Slate900.copy(alpha = 0.8f) else Color(0xFFF1F5F9)
                             )
                             .border(
                                 1.dp,
                                 if (transactionType == "EXPENSE" && projectedBal < 0) AccentRose.copy(alpha = 0.4f)
-                                else Slate800,
+                                else if (isDark) Slate800 else Color(0xFFE2E8F0),
                                 RoundedCornerShape(8.dp)
                             )
                             .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -506,7 +506,7 @@ fun AddEditTransactionModal(
                         ) {
                             Text(
                                 text = if (transactionType == "EXPENSE" && projectedBal < 0) "⚠️ Exceeds balance" else "${selectedFund.name} projected balance:",
-                                color = if (transactionType == "EXPENSE" && projectedBal < 0) AccentRose else Slate400,
+                                color = if (transactionType == "EXPENSE" && projectedBal < 0) AccentRose else textMutedColor(),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -526,7 +526,7 @@ fun AddEditTransactionModal(
             // Payment Method Selector
             Text(
                 text = "Payment Method",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(bottom = 6.dp)
@@ -538,8 +538,8 @@ fun AddEditTransactionModal(
                         .fillMaxWidth()
                         .height(50.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Slate900)
-                        .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                         .clickable { isPaymentDropdownExpanded = true }
                         .padding(horizontal = 14.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -555,7 +555,7 @@ fun AddEditTransactionModal(
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             text = paymentMethod,
-                            color = Slate100,
+                            color = textPrimaryColor(),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -564,7 +564,7 @@ fun AddEditTransactionModal(
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = "Select Payment Method",
-                        tint = Slate400
+                        tint = textMutedColor()
                     )
                 }
 
@@ -572,15 +572,15 @@ fun AddEditTransactionModal(
                     expanded = isPaymentDropdownExpanded,
                     onDismissRequest = { isPaymentDropdownExpanded = false },
                     modifier = Modifier
-                        .background(DarkSurface)
-                        .border(1.dp, Slate800, RoundedCornerShape(12.dp))
+                        .background(glassModalContainerColor())
+                        .border(1.dp, glassBorderColor(), RoundedCornerShape(12.dp))
                 ) {
                     paymentMethods.forEach { method ->
                         DropdownMenuItem(
                             text = {
                                 Text(
                                     text = method,
-                                    color = if (paymentMethod == method) AccentCyan else Slate100,
+                                    color = if (paymentMethod == method) AccentCyan else textPrimaryColor(),
                                     fontSize = 13.sp,
                                     fontWeight = if (paymentMethod == method) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -601,8 +601,8 @@ fun AddEditTransactionModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Slate900)
-                    .border(1.dp, Slate800, RoundedCornerShape(14.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Column {
@@ -622,13 +622,13 @@ fun AddEditTransactionModal(
                             Column {
                                 Text(
                                     text = "Recurring Subscription",
-                                    color = Slate100,
+                                    color = textPrimaryColor(),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = "Track as fixed monthly/weekly bill",
-                                    color = Slate400,
+                                    color = textMutedColor(),
                                     fontSize = 11.sp
                                 )
                             }
@@ -639,8 +639,8 @@ fun AddEditTransactionModal(
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
                                 checkedTrackColor = AccentCyan,
-                                uncheckedThumbColor = Slate400,
-                                uncheckedTrackColor = Slate800
+                                uncheckedThumbColor = textMutedColor(),
+                                uncheckedTrackColor = if (isDark) Slate800 else Color(0xFFE2E8F0)
                             )
                         )
                     }
@@ -657,10 +657,10 @@ fun AddEditTransactionModal(
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isSelected) AccentCyan.copy(alpha = 0.2f) else Slate950)
+                                        .background(if (isSelected) AccentCyan.copy(alpha = 0.2f) else glassSurfaceBgColor())
                                         .border(
                                             1.dp,
-                                            if (isSelected) AccentCyan else Slate800,
+                                            if (isSelected) AccentCyan else glassBorderColor(),
                                             RoundedCornerShape(8.dp)
                                         )
                                         .clickable { recurringInterval = interval }
@@ -669,7 +669,7 @@ fun AddEditTransactionModal(
                                 ) {
                                     Text(
                                         text = interval.lowercase().replaceFirstChar { it.uppercase() },
-                                        color = if (isSelected) AccentCyan else Slate400,
+                                        color = if (isSelected) AccentCyan else textMutedColor(),
                                         fontSize = 11.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
@@ -686,17 +686,10 @@ fun AddEditTransactionModal(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("Note (Optional)", color = Slate400) },
-                placeholder = { Text("Add receipts info or memos...", color = Slate600) },
+                label = { Text("Note (Optional)", color = textMutedColor()) },
+                placeholder = { Text("Add receipts info or memos...", color = textMutedColor().copy(alpha = 0.7f)) },
                 maxLines = 2,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate200,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = Slate700,
-                    focusedContainerColor = Slate900,
-                    unfocusedContainerColor = Slate900
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth()
             )

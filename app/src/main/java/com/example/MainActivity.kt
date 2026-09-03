@@ -92,10 +92,16 @@ import kotlinx.coroutines.launch
 
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.outlined.Calculate
+import androidx.compose.material.icons.filled.Handshake
+import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.outlined.ReceiptLong
+import com.example.data.local.entity.DebtEntity
 import com.example.data.local.entity.ExpenseTemplateEntity
+import com.example.ui.modals.CreateEditDebtModal
 import com.example.ui.modals.CreateEditTemplateModal
+import com.example.ui.modals.RecordDebtPaymentModal
+import com.example.ui.screens.DebtsScreen
 import com.example.ui.screens.ExpensesScreen
 import com.example.ui.screens.ToolsScreen
 
@@ -107,6 +113,7 @@ enum class AppNavigationTab(
 ) {
     DASHBOARD("Tracker", Icons.Filled.AccountBalanceWallet, Icons.Outlined.AccountBalanceWallet, "nav_dashboard"),
     EXPENSES("Expenses", Icons.Filled.ReceiptLong, Icons.Outlined.ReceiptLong, "nav_expenses"),
+    DEBTS("Debts", Icons.Filled.Handshake, Icons.Outlined.Handshake, "nav_debts"),
     FUNDS("Funds", Icons.Filled.Savings, Icons.Outlined.Savings, "nav_funds"),
     TOOLS("Tools", Icons.Filled.Calculate, Icons.Outlined.Calculate, "nav_tools"),
     REPORTS("Reports", Icons.Filled.Insights, Icons.Outlined.Insights, "nav_reports"),
@@ -158,6 +165,7 @@ fun BudgetApp(
     val limits by viewModel.budgetLimits.collectAsStateWithLifecycle()
     val funds by viewModel.funds.collectAsStateWithLifecycle()
     val expenseTemplates by viewModel.expenseTemplates.collectAsStateWithLifecycle()
+    val debts by viewModel.debts.collectAsStateWithLifecycle()
     val budgetForecast by viewModel.budgetForecast.collectAsStateWithLifecycle()
     val selectedTimeframe by viewModel.selectedTimeframe.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
@@ -185,6 +193,11 @@ fun BudgetApp(
 
     var showCreateEditTemplateModal by remember { mutableStateOf(false) }
     var selectedTemplateToEdit by remember { mutableStateOf<ExpenseTemplateEntity?>(null) }
+
+    var showCreateEditDebtModal by remember { mutableStateOf(false) }
+    var selectedDebtToEdit by remember { mutableStateOf<DebtEntity?>(null) }
+    var showRecordDebtPaymentModal by remember { mutableStateOf(false) }
+    var selectedDebtForPayment by remember { mutableStateOf<DebtEntity?>(null) }
 
     var showSetBudgetModal by remember { mutableStateOf(false) }
     var selectedLimitToEdit by remember { mutableStateOf<BudgetLimitEntity?>(null) }
@@ -376,6 +389,27 @@ fun BudgetApp(
                             onTransactionClick = { tx ->
                                 selectedTransactionToEdit = tx
                                 showAddTransactionModal = true
+                            }
+                        )
+                    }
+                    AppNavigationTab.DEBTS -> {
+                        DebtsScreen(
+                            debts = debts,
+                            currencySymbol = currencySymbol,
+                            onCreateDebtClick = {
+                                selectedDebtToEdit = null
+                                showCreateEditDebtModal = true
+                            },
+                            onEditDebtClick = { debt ->
+                                selectedDebtToEdit = debt
+                                showCreateEditDebtModal = true
+                            },
+                            onRecordPaymentClick = { debt ->
+                                selectedDebtForPayment = debt
+                                showRecordDebtPaymentModal = true
+                            },
+                            onToggleSettledClick = { debt ->
+                                viewModel.toggleDebtSettled(debt)
                             }
                         )
                     }
@@ -657,6 +691,64 @@ fun BudgetApp(
             },
             onDelete = { template ->
                 viewModel.deleteExpenseTemplate(template)
+            }
+        )
+    }
+
+    // Create / Edit Debt Modal BottomSheet
+    if (showCreateEditDebtModal) {
+        CreateEditDebtModal(
+            debtToEdit = selectedDebtToEdit,
+            currencySymbol = currencySymbol,
+            onDismiss = {
+                showCreateEditDebtModal = false
+                selectedDebtToEdit = null
+            },
+            onSave = { personName, type, totalAmount, amountPaid, dueDateMillis, notes, contactPhone ->
+                if (selectedDebtToEdit == null) {
+                    viewModel.createDebt(
+                        personName = personName,
+                        type = type,
+                        totalAmount = totalAmount,
+                        amountPaid = amountPaid,
+                        dueDateMillis = dueDateMillis,
+                        notes = notes,
+                        contactPhone = contactPhone
+                    )
+                } else {
+                    val updated = selectedDebtToEdit!!.copy(
+                        personName = personName,
+                        type = type,
+                        totalAmount = totalAmount,
+                        amountPaid = amountPaid,
+                        dueDateMillis = dueDateMillis,
+                        notes = notes,
+                        contactPhone = contactPhone
+                    )
+                    viewModel.updateDebt(updated)
+                }
+            },
+            onDelete = { debt ->
+                viewModel.deleteDebt(debt)
+            }
+        )
+    }
+
+    // Record Debt Payment Modal BottomSheet
+    if (showRecordDebtPaymentModal && selectedDebtForPayment != null) {
+        RecordDebtPaymentModal(
+            debt = selectedDebtForPayment!!,
+            currencySymbol = currencySymbol,
+            onDismiss = {
+                showRecordDebtPaymentModal = false
+                selectedDebtForPayment = null
+            },
+            onRecordPayment = { paymentAmount, recordAsTransaction ->
+                viewModel.recordDebtPayment(
+                    debt = selectedDebtForPayment!!,
+                    paymentAmount = paymentAmount,
+                    recordAsTransaction = recordAsTransaction
+                )
             }
         )
     }

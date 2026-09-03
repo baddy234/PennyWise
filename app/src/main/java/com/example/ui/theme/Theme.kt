@@ -52,11 +52,11 @@ private val LightColorScheme = lightColorScheme(
     tertiary = AccentEmerald,
     onTertiary = Color.White,
     background = Color(0xFFF1F5F9), // Frosted light slate
-    onBackground = Slate900,
+    onBackground = Color.Black,
     surface = Color(0xFFFFFFFF),
-    onSurface = Slate900,
+    onSurface = Color.Black,
     surfaceVariant = Color(0xFFE2E8F0),
-    onSurfaceVariant = Slate700,
+    onSurfaceVariant = Color(0xFF0F172A),
     outline = Slate300
 )
 
@@ -67,20 +67,38 @@ fun isAppInDarkTheme(): Boolean {
 }
 
 @Composable
+fun textPrimaryColor(): Color = if (isAppInDarkTheme()) Slate50 else Color.Black
+
+@Composable
+fun textSecondaryColor(): Color = if (isAppInDarkTheme()) Slate300 else Color(0xFF0F172A)
+
+@Composable
+fun textMutedColor(): Color = if (isAppInDarkTheme()) Slate400 else Color(0xFF334155)
+
+@Composable
+fun glassModalContainerColor(): Color = if (isAppInDarkTheme()) Slate900 else Color(0xF5F8FAFC)
+
+@Composable
+fun glassSurfaceBgColor(): Color = if (isAppInDarkTheme()) GlassSurfaceDark else Color(0xE6FFFFFF)
+
+@Composable
+fun glassBorderColor(): Color = if (isAppInDarkTheme()) GlassBorderDark else Color(0x33000000)
+
+@Composable
 fun appTextFieldColors(
     focusedBorderColor: Color = AccentCyan,
     unfocusedBorderColor: Color? = null
 ) = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedTextColor = if (isAppInDarkTheme()) Slate50 else Color.Black,
+    unfocusedTextColor = if (isAppInDarkTheme()) Slate100 else Color.Black,
     focusedBorderColor = focusedBorderColor,
-    unfocusedBorderColor = unfocusedBorderColor ?: if (isAppInDarkTheme()) Slate700 else Slate300,
-    focusedContainerColor = if (isAppInDarkTheme()) Slate900 else Slate100,
-    unfocusedContainerColor = if (isAppInDarkTheme()) Slate900 else Slate100,
+    unfocusedBorderColor = unfocusedBorderColor ?: if (isAppInDarkTheme()) Slate700 else Color(0x33000000),
+    focusedContainerColor = if (isAppInDarkTheme()) GlassSurfaceDark else Color(0xF0FFFFFF),
+    unfocusedContainerColor = if (isAppInDarkTheme()) GlassSurfaceDark else Color(0xE6FFFFFF),
     focusedLabelColor = focusedBorderColor,
-    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-    unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    unfocusedLabelColor = if (isAppInDarkTheme()) Slate300 else Color(0xFF0F172A),
+    focusedPlaceholderColor = if (isAppInDarkTheme()) Slate400 else Color(0xFF475569),
+    unfocusedPlaceholderColor = if (isAppInDarkTheme()) Slate400 else Color(0xFF475569)
 )
 
 @Composable

@@ -458,7 +458,7 @@ fun FundsScreen(
             ModalBottomSheet(
                 onDismissRequest = { showPortfolioModal = false },
                 sheetState = sheetState,
-                containerColor = DarkSurface,
+                containerColor = glassModalContainerColor(),
                 scrimColor = Color.Black.copy(alpha = 0.7f),
                 dragHandle = {
                     Box(
@@ -467,7 +467,7 @@ fun FundsScreen(
                             .width(40.dp)
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp))
-                            .background(Slate700)
+                            .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
                     )
                 }
             ) {

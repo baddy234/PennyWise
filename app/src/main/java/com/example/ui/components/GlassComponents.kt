@@ -145,8 +145,8 @@ fun GlassCard(
     onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val isDark = MaterialTheme.colorScheme.background == DarkBackground || MaterialTheme.colorScheme.background == Color(0xFF030712)
-    val defaultBg = if (isDark) GlassSurfaceDark else Color(0xD9FFFFFF) // Translucent light glass card
+    val isDark = isAppInDarkTheme()
+    val defaultBg = if (isDark) GlassSurfaceDark else Color(0xE6FFFFFF) // Translucent light glass card
     val effectiveBg = backgroundColor ?: defaultBg
 
     val interactionSource = remember { MutableInteractionSource() }

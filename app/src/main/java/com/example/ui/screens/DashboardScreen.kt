@@ -73,6 +73,8 @@ import com.example.data.model.CategoryRegistry
 import com.example.ui.components.BadgeVariant
 import com.example.ui.components.GlassButton
 import com.example.ui.components.GlassCard
+import com.example.ui.components.MonthlyTrendVsLimitItem
+import com.example.ui.components.RechartsSpendingTrendChart
 import com.example.ui.components.ShadcnBadge
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.PeriodSummary
@@ -754,6 +756,63 @@ fun DashboardScreen(
             }
 
             // ==========================================
+            // RECHARTS MONTHLY SPENDING TRENDS VS LIMITS
+            // ==========================================
+            item {
+                val monthlyTrends = remember(transactions, limits) {
+                    val expenses = transactions.filter { it.type == "EXPENSE" }
+                    val monthlyLimitObj = limits.find { it.periodType == "MONTHLY" && it.isEnabled }
+                    val explicitLimit = monthlyLimitObj?.limitAmount ?: 0.0
+                    val categoryMonthlyTotal = limits.filter { it.periodType == "CATEGORY" && it.isEnabled }.sumOf { it.limitAmount }
+                    val activeLimit = if (explicitLimit > 0) explicitLimit else if (categoryMonthlyTotal > 0) categoryMonthlyTotal else 1500.0
+
+                    val monthFormat = SimpleDateFormat("MMM", Locale.getDefault())
+                    val fullFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+
+                    val result = mutableListOf<MonthlyTrendVsLimitItem>()
+                    val nowCal = java.util.Calendar.getInstance()
+                    val currentMonthIdx = nowCal.get(java.util.Calendar.MONTH)
+                    val currentYearIdx = nowCal.get(java.util.Calendar.YEAR)
+
+                    for (m in 5 downTo 0) {
+                        val c = java.util.Calendar.getInstance()
+                        c.add(java.util.Calendar.MONTH, -m)
+                        c.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                        c.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                        c.set(java.util.Calendar.MINUTE, 0)
+                        c.set(java.util.Calendar.SECOND, 0)
+                        c.set(java.util.Calendar.MILLISECOND, 0)
+                        val startMs = c.timeInMillis
+
+                        c.add(java.util.Calendar.MONTH, 1)
+                        val endMs = c.timeInMillis
+
+                        val monthSpend = expenses.filter { it.dateMillis in startMs until endMs }.sumOf { it.amount }
+
+                        c.timeInMillis = startMs
+                        val isCurrent = (c.get(java.util.Calendar.MONTH) == currentMonthIdx && c.get(java.util.Calendar.YEAR) == currentYearIdx)
+
+                        result.add(
+                            MonthlyTrendVsLimitItem(
+                                monthLabel = monthFormat.format(Date(startMs)),
+                                fullMonthName = fullFormat.format(Date(startMs)),
+                                actualSpending = monthSpend,
+                                setLimit = activeLimit,
+                                isCurrentMonth = isCurrent
+                            )
+                        )
+                    }
+                    result
+                }
+
+                RechartsSpendingTrendChart(
+                    items = monthlyTrends,
+                    currencySymbol = currencySymbol,
+                    modifier = Modifier.testTag("dashboard_recharts_trend_chart")
+                )
+            }
+
+            // ==========================================
             // 2. EXPENSES INFOGRAPHIC
             // ==========================================
             item {
@@ -1065,7 +1124,7 @@ fun DashboardScreen(
         ModalBottomSheet(
             onDismissRequest = { showTimeframeModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = {
                 Box(
@@ -1074,7 +1133,7 @@ fun DashboardScreen(
                         .width(40.dp)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Slate700)
+                        .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
                 )
             }
         ) {
@@ -1202,7 +1261,7 @@ fun DashboardScreen(
         ModalBottomSheet(
             onDismissRequest = { showPeriodInfoModal = false },
             sheetState = sheetState,
-            containerColor = DarkSurface,
+            containerColor = glassModalContainerColor(),
             scrimColor = Color.Black.copy(alpha = 0.7f),
             dragHandle = {
                 Box(
@@ -1211,7 +1270,7 @@ fun DashboardScreen(
                         .width(40.dp)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Slate700)
+                        .background(if (isAppInDarkTheme()) Slate700 else Color(0xFFCBD5E1))
                 )
             }
         ) {

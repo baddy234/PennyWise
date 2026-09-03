@@ -1,5 +1,6 @@
 package com.example.ui.modals
 
+import com.example.ui.theme.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -104,7 +105,7 @@ fun CreateEditTemplateModal(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Slate900,
+        containerColor = glassModalContainerColor(),
         scrimColor = Color.Black.copy(alpha = 0.65f),
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
@@ -123,7 +124,7 @@ fun CreateEditTemplateModal(
                 Column {
                     Text(
                         text = if (templateToEdit == null) "NEW TEMPLATE" else "EDIT TEMPLATE",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.2.sp
@@ -131,7 +132,7 @@ fun CreateEditTemplateModal(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (templateToEdit == null) "Create Expense Preset" else "Update Template",
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 22.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
@@ -141,13 +142,13 @@ fun CreateEditTemplateModal(
                     onClick = onDismiss,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(GlassSurfaceDark)
-                        .border(1.dp, GlassBorderDark, CircleShape)
+                        .background(glassSurfaceBgColor())
+                        .border(1.dp, glassBorderColor(), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close",
-                        tint = Slate300
+                        tint = textSecondaryColor()
                     )
                 }
             }
@@ -157,7 +158,7 @@ fun CreateEditTemplateModal(
             // Title Field
             Text(
                 text = "Template Name",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -165,16 +166,9 @@ fun CreateEditTemplateModal(
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
-                placeholder = { Text("e.g. Weekly Groceries, Gas Top-up", color = Slate400, fontSize = 14.sp) },
+                placeholder = { Text("e.g. Weekly Groceries, Gas Top-up", color = textMutedColor(), fontSize = 14.sp) },
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = GlassSurfaceDark,
-                    unfocusedContainerColor = GlassSurfaceDark,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = GlassBorderDark,
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate100
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -186,7 +180,7 @@ fun CreateEditTemplateModal(
             // Amount Field
             Text(
                 text = "Estimated Amount ($currencySymbol)",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -194,18 +188,11 @@ fun CreateEditTemplateModal(
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it },
-                placeholder = { Text("0.00", color = Slate400, fontSize = 14.sp) },
+                placeholder = { Text("0.00", color = textMutedColor(), fontSize = 14.sp) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 prefix = { Text("$currencySymbol ", color = AccentCyan, fontWeight = FontWeight.Bold) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = GlassSurfaceDark,
-                    unfocusedContainerColor = GlassSurfaceDark,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = GlassBorderDark,
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate100
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -217,7 +204,7 @@ fun CreateEditTemplateModal(
             // Category Selector
             Text(
                 text = "Category",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -226,8 +213,8 @@ fun CreateEditTemplateModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(GlassSurfaceDark)
-                    .border(1.dp, GlassBorderDark, RoundedCornerShape(14.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -244,7 +231,7 @@ fun CreateEditTemplateModal(
                     ) {
                         Text(
                             text = catName.split(" ").first(),
-                            color = if (isSel) Color.Black else Slate300,
+                            color = if (isSel) Color.Black else textSecondaryColor(),
                             fontSize = 11.sp,
                             fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium
                         )
@@ -257,7 +244,7 @@ fun CreateEditTemplateModal(
             // Frequency Chips
             Text(
                 text = "Recurrence Frequency",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -272,15 +259,15 @@ fun CreateEditTemplateModal(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSel) AccentCyan.copy(alpha = 0.2f) else GlassSurfaceDark)
-                            .border(1.dp, if (isSel) AccentCyan else GlassBorderDark, RoundedCornerShape(12.dp))
+                            .background(if (isSel) AccentCyan.copy(alpha = 0.2f) else glassSurfaceBgColor())
+                            .border(1.dp, if (isSel) AccentCyan else glassBorderColor(), RoundedCornerShape(12.dp))
                             .clickable { frequency = freq }
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = freq,
-                            color = if (isSel) AccentCyan else Slate300,
+                            color = if (isSel) AccentCyan else textSecondaryColor(),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -293,7 +280,7 @@ fun CreateEditTemplateModal(
             // Payment Method Selector
             Text(
                 text = "Payment Method",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -308,15 +295,15 @@ fun CreateEditTemplateModal(
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSel) Slate800 else GlassSurfaceDark)
-                            .border(1.dp, if (isSel) AccentCyan else GlassBorderDark, RoundedCornerShape(12.dp))
+                            .background(if (isSel) glassSurfaceBgColor() else glassSurfaceBgColor().copy(alpha = 0.5f))
+                            .border(1.dp, if (isSel) AccentCyan else glassBorderColor(), RoundedCornerShape(12.dp))
                             .clickable { paymentMethod = pm }
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = pm,
-                            color = if (isSel) Slate50 else Slate400,
+                            color = if (isSel) textPrimaryColor() else textMutedColor(),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -331,8 +318,8 @@ fun CreateEditTemplateModal(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(GlassSurfaceDark)
-                    .border(1.dp, GlassBorderDark, RoundedCornerShape(14.dp))
+                    .background(glassSurfaceBgColor())
+                    .border(1.dp, glassBorderColor(), RoundedCornerShape(14.dp))
                     .padding(horizontal = 14.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -340,13 +327,13 @@ fun CreateEditTemplateModal(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Include in Monthly Plan",
-                        color = Slate50,
+                        color = textPrimaryColor(),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "Adds this template to your monthly budget projection calculations",
-                        color = Slate400,
+                        color = textMutedColor(),
                         fontSize = 11.sp
                     )
                 }
@@ -354,10 +341,10 @@ fun CreateEditTemplateModal(
                     checked = isPlanned,
                     onCheckedChange = { isPlanned = it },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.Black,
+                        checkedThumbColor = Color.White,
                         checkedTrackColor = AccentCyan,
-                        uncheckedThumbColor = Slate400,
-                        uncheckedTrackColor = Slate800
+                        uncheckedThumbColor = textMutedColor(),
+                        uncheckedTrackColor = if (isAppInDarkTheme()) Slate800 else Color(0xFFE2E8F0)
                     )
                 )
             }
@@ -367,7 +354,7 @@ fun CreateEditTemplateModal(
             // Note Field
             Text(
                 text = "Note / Description",
-                color = Slate300,
+                color = textSecondaryColor(),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -375,16 +362,9 @@ fun CreateEditTemplateModal(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                placeholder = { Text("Optional store, brand, or location details", color = Slate400, fontSize = 13.sp) },
+                placeholder = { Text("Optional store, brand, or location details", color = textMutedColor(), fontSize = 13.sp) },
                 singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = GlassSurfaceDark,
-                    unfocusedContainerColor = GlassSurfaceDark,
-                    focusedBorderColor = AccentCyan,
-                    unfocusedBorderColor = GlassBorderDark,
-                    focusedTextColor = Slate50,
-                    unfocusedTextColor = Slate100
-                ),
+                colors = appTextFieldColors(focusedBorderColor = AccentCyan),
                 shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth()
             )
